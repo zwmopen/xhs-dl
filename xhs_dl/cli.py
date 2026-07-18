@@ -51,6 +51,15 @@ def main():
                         help="每条笔记最大等待秒数（默认: 300）")
     args = parser.parse_args()
 
+    # 无参数启动（例如双击启动文件）时，进入一次粘贴输入模式。
+    if not args.urls and not args.file:
+        try:
+            pasted = input("请粘贴小红书分享文本或链接，然后按回车：\n> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            pasted = ""
+        if pasted:
+            args.urls.append(pasted)
+
     # 收集链接
     from xhs_dl.core.downloader import extract_urls_from_text, XhsDownloader, DELAY_MODES
     all_urls = []
