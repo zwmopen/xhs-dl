@@ -15,6 +15,8 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 ## 首次安装
 
+Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
+
 在 PowerShell 中运行：
 
 ```powershell
