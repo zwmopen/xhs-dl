@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xhs-dl"
+version = "1.0.0"
+description = "小红书笔记下载器 - 无需登录，支持短链接和分享文本"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = ["requests>=2.28.0"]
+license = {text = "MIT"}
+
+[project.scripts]
+xhs-dl = "xhs_dl.cli:main"
+xhs-dl-web = "xhs_dl.web.app:main"
+
+[tool.setuptools.packages.find]
+include = ["xhs_dl*"]
