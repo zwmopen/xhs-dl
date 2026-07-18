@@ -1,11 +1,11 @@
 @echo off
 chcp 65001 >nul
-title xhs-dl 小红书笔记下载器 (Web)
-cd /d "D:\AICode\xhs-dl"
+title xhs-dl V2 Web
+cd /d "%~dp0"
 echo.
-echo   xhs-dl Web 服务启动中...
-echo   浏览器将自动打开 http://127.0.0.1:5678
-echo   关闭此窗口可停止服务
+echo   Starting xhs-dl V2 Web...
+echo   Browser URL: http://127.0.0.1:5678
+echo   Close this window to stop the service.
 echo.
 python -m xhs_dl.web.app
 pause

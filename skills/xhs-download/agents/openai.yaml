@@ -1,0 +1,4 @@
+interface:
+  display_name: "小红书无水印下载"
+  short_description: "免登录批量提取小红书公开笔记原始图片和视频到本地文件夹"
+  default_prompt: "Use $xhs-download to download the Xiaohongshu share links I provide to a local folder."

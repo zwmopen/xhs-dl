@@ -1,15 +1,23 @@
 param(
-    [string]$EnginePath = "$(Split-Path -Parent $PSScriptRoot)\XHS_Downloader"
+    [string]$EnginePath = "$(Split-Path -Parent $PSScriptRoot)\XHS_Downloader",
+    [string]$EngineRef = "50f9579746de2fbb5bb46c244f680327280c019e"
 )
 
 $ErrorActionPreference = "Stop"
 
 if (-not (Test-Path -LiteralPath "$EnginePath\main.py")) {
-    Write-Host "正在下载本地无水印引擎..."
-    git clone --depth 1 https://github.com/JoeanAmier/XHS_Downloader.git $EnginePath
+    Write-Host "Downloading the local original-media engine..."
+    git clone https://github.com/JoeanAmier/XHS_Downloader.git $EnginePath
+    git -C $EnginePath checkout --detach $EngineRef
+}
+else {
+    $CurrentRef = (git -C $EnginePath rev-parse HEAD).Trim()
+    if ($CurrentRef -ne $EngineRef) {
+        throw "Existing engine $CurrentRef differs from verified ref $EngineRef. Review it and pass -EngineRef explicitly."
+    }
 }
 
-Write-Host "正在准备独立 Python 3.12 环境..."
+Write-Host "Preparing an isolated Python 3.12 environment..."
 python -m pip install --user uv
 Push-Location $EnginePath
 try {
@@ -20,5 +28,5 @@ finally {
     Pop-Location
 }
 
-Write-Host "安装完成。引擎位置: $EnginePath"
-Write-Host "可运行：python -m xhs_dl.cli \"小红书分享链接\""
+Write-Host "Engine setup completed: $EnginePath"
+Write-Host "Next: python -m pip install -e $PSScriptRoot"

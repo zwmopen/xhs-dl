@@ -56,7 +56,7 @@ textarea::placeholder{color:#ccc}
 <body>
 <div class="card">
   <h1>xhs-dl</h1>
-  <p class="sub">小红书无水印下载器 V2.0 | 本地引擎 | 支持短链接 &amp; 分享文本</p>
+  <p class="sub">小红书无水印下载器 V2.1 | 本地引擎 | 支持短链接 &amp; 分享文本</p>
 
   <textarea id="input" placeholder="粘贴小红书分享文本或链接，每行一个，也支持整段粘贴&#10;&#10;示例:&#10;快存下！vivo X300隐藏功能！ http://xhslink.com/o/xxxxx&#10;http://xhslink.com/o/yyyyy"></textarea>
 
