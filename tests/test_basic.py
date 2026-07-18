@@ -11,18 +11,52 @@ def test_extract_urls():
     assert len(urls) == 2
     assert urls[0] == "http://xhslink.com/o/70dt8TsFJon"
     assert urls[1] == "http://xhslink.com/o/4FGTfCCdPew"
-    print("extract_urls: PASS")
+    print("extract_urls (短链接): PASS")
+
+def test_extract_long_urls():
+    """测试长链接（xiaohongshu.com）提取"""
+    text = """
+    https://www.xiaohongshu.com/explore/6a4dc64100000000220147df?xsec_token=CB8ns82QDJ4nkHiWJ_xCz5VrB6Pngw2UdacVqKbz8Qm2w%3D&xsec_source=app_share
+    另一个 https://www.xiaohongshu.com/discovery/item/6a50b32f000000000603721e?xsec_token=xxx
+    """
+    urls = extract_urls_from_text(text)
+    assert len(urls) == 2
+    assert "6a4dc64100000000220147df" in urls[0]
+    assert "6a50b32f000000000603721e" in urls[1]
+    print("extract_urls (长链接): PASS")
+
+def test_extract_urls_with_trailing_punctuation():
+    """测试 URL 后面带中英文标点能正确清理"""
+    text = "看这个 http://xhslink.com/o/70dt8TsFJon，快来！还有 https://www.xiaohongshu.com/explore/6a4dc64100000000220147df?xsec_token=abc。"
+    urls = extract_urls_from_text(text)
+    assert urls[0] == "http://xhslink.com/o/70dt8TsFJon", f"got: {urls[0]}"
+    assert urls[1] == "https://www.xiaohongshu.com/explore/6a4dc64100000000220147df?xsec_token=abc", f"got: {urls[1]}"
+    print("extract_urls (尾部标点清理): PASS")
 
 def test_parse_note_id():
     from xhs_dl.core.downloader import XhsDownloader
+    # discovery/item 路径
     assert XhsDownloader._parse_note_id(
         "https://www.xiaohongshu.com/discovery/item/6a50b32f000000000603721e?xsec_token=xxx"
     ) == "6a50b32f000000000603721e"
+    # explore 路径
     assert XhsDownloader._parse_note_id(
         "https://www.xiaohongshu.com/explore/6a4dc64100000000220147df"
     ) == "6a4dc64100000000220147df"
     assert XhsDownloader._parse_note_id("https://example.com") == ""
     print("parse_note_id: PASS")
+
+def test_url_type_detection():
+    """测试短链接/长链接识别"""
+    from xhs_dl.core.downloader import XhsDownloader
+    assert XhsDownloader._is_short_url("http://xhslink.com/o/xxx")
+    assert XhsDownloader._is_short_url("https://xhslink.com/a/yyy")
+    assert not XhsDownloader._is_short_url("https://www.xiaohongshu.com/explore/xxx")
+
+    assert XhsDownloader._is_long_url("https://www.xiaohongshu.com/explore/6a4dc64100000000220147df?xsec_token=xxx")
+    assert XhsDownloader._is_long_url("https://www.xiaohongshu.com/discovery/item/6a50b32f000000000603721e")
+    assert not XhsDownloader._is_long_url("http://xhslink.com/o/xxx")
+    print("url_type_detection: PASS")
 
 def test_sanitize():
     from xhs_dl.core.downloader import XhsDownloader
@@ -41,7 +75,10 @@ def test_extract_ssr_state():
 
 if __name__ == "__main__":
     test_extract_urls()
+    test_extract_long_urls()
+    test_extract_urls_with_trailing_punctuation()
     test_parse_note_id()
+    test_url_type_detection()
     test_sanitize()
     test_extract_ssr_state()
     print("\nAll tests passed!")

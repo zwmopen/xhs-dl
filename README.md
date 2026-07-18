@@ -4,17 +4,27 @@
 
 **无需登录账号。**
 
+## 支持的链接格式
+
+工具自动识别两种小红书链接格式，可混用：
+
+1. **短链接**：`http://xhslink.com/o/xxxxx`（分享按钮复制，自动 302 重定向获取完整 URL）
+2. **长链接**：`https://www.xiaohongshu.com/explore/{note_id}?xsec_token=...` 或 `https://www.xiaohongshu.com/discovery/item/{note_id}?xsec_token=...`
+
+> 长链接必须带 `xsec_token` 参数，否则会被安全系统拦截返回 404。短链接重定向后会自动带上。
+> 分享文本中 URL 后面的中英文标点（逗号、句号等）会被自动清理。
+
 ## 已知限制
 
 - 下载的图片带有小红书平台水印（水印是服务端在图片上烧录的，技术上无法通过修改 URL 去除）
 - 视频笔记暂仅下载封面图，不下载视频文件
-- 频繁请求可能触发风控，工具已内置随机延迟（2-5 秒）
+- 频繁请求可能触发风控，工具内置 5 种延迟模式（默认 cautious 25-45 秒）
 
 ## 安装
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/xhs-dl.git
+git clone https://github.com/zwmopen/xhs-dl.git
 cd xhs-dl
 
 # 安装依赖

@@ -59,9 +59,12 @@ DOWNLOAD_HEADERS = {
 
 
 def extract_urls_from_text(text: str) -> List[str]:
-    """从分享文本中提取所有 URL"""
-    pattern = r'https?://[^\s<>"\')\]]+'
-    return re.findall(pattern, text)
+    """从分享文本中提取所有 URL（支持短链接和长链接）"""
+    # 排除空白、尖括号、引号、括号、中英文标点，避免把 URL 后面的标点误纳入
+    pattern = r'https?://[^\s<>"\')\]，。；：！？、）】》」』]+'
+    urls = re.findall(pattern, text)
+    # 二次清理尾部英文标点（正则已排除中文标点，这里兜底英文逗号句号等）
+    return [u.rstrip('.,;:!?()') for u in urls]
 
 
 class XhsDownloader:
@@ -189,14 +192,43 @@ class XhsDownloader:
 
     # ── 链接解析 ──
 
+    @staticmethod
+    def _is_short_url(url: str) -> bool:
+        """判断是否为 xhslink.com 短链接"""
+        return "xhslink.com" in url
+
+    @staticmethod
+    def _is_long_url(url: str) -> bool:
+        """判断是否为 xiaohongshu.com 长链接（explore/discovery/item）"""
+        return "xiaohongshu.com" in url and (
+            "/explore/" in url or "/discovery/item/" in url
+        )
+
     def _resolve_url(self, url: str) -> str:
+        """解析 URL，返回可直接访问的完整 URL。
+
+        支持两种输入：
+        - 短链接 (xhslink.com)：跟踪 302 重定向得到完整 URL（带 xsec_token）
+        - 长链接 (xiaohongshu.com/explore/... 或 /discovery/item/...)：
+          已是完整 URL，直接返回，避免重复请求
+
+        注意：长链接必须带 xsec_token 参数，否则会被安全系统拦截返回 404。
+        短链接重定向后会自动带上 xsec_token。
+        """
         if url.startswith("xhslink.com"):
             url = "https://" + url
+
+        # 长链接已是完整 URL（带 xsec_token 等参数），直接返回避免重复请求
+        if self._is_long_url(url):
+            return url
+
+        # 短链接需要跟踪 302 重定向获取完整 URL
         resp = self.session.get(url, allow_redirects=True, timeout=15)
         return resp.url
 
     @staticmethod
     def _parse_note_id(url: str) -> str:
+        """从 URL 提取 24 位 hex 的 note_id，支持 explore 和 discovery/item 两种路径"""
         m = re.search(r'/(?:explore|discovery/item)/([a-f0-9]{24})', url)
         return m.group(1) if m else ""
 
