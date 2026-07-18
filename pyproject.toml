@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "1.0.0"
-description = "小红书笔记下载器 - 无需登录，支持短链接和分享文本"
+version = "2.0.0"
+description = "小红书无水印下载器 - 本地引擎，支持短链接和分享文本"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = ["requests>=2.28.0"]

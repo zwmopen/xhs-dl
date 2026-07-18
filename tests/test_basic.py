@@ -1,4 +1,8 @@
 import sys, os
+import tempfile
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from xhs_dl.core.downloader import extract_urls_from_text
 
@@ -73,6 +77,52 @@ def test_extract_ssr_state():
     assert state == {"a": 1, "b": {"c": 2}}
     print("extract_ssr_state: PASS")
 
+def test_v2_local_cli_adapter():
+    """不访问网络，验证 V2 CLI 参数、结果识别和本地清单。"""
+    from xhs_dl.core.v2_downloader import LocalCliEngine
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        engine_home = root / "engine"
+        (engine_home / "source").mkdir(parents=True)
+        (engine_home / ".venv" / "Scripts").mkdir(parents=True)
+        (engine_home / "main.py").write_text("", encoding="utf-8")
+        (engine_home / ".venv" / "Scripts" / "python.exe").write_bytes(b"")
+        output = root / "downloads"
+
+        def fake_run(command, **kwargs):
+            assert "--image_format" in command and "PNG" in command
+            note_dir = output / "2026-07-18_12.00.00_作者_测试标题"
+            note_dir.mkdir(parents=True)
+            (note_dir / "图片_1.png").write_bytes(b"fake-png")
+            return SimpleNamespace(
+                returncode=0,
+                stdout="开始处理作品：6a4dc64100000000220147df\n作品处理完成",
+                stderr="",
+            )
+
+        engine = LocalCliEngine(str(engine_home))
+        with patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_run):
+            result = engine.download_one("http://xhslink.com/o/test", output)
+        assert result.success
+        assert result.note_id == "6a4dc64100000000220147df"
+        assert result.image_count == 1
+        assert (Path(result.save_dir) / "xhs-dl-result.json").is_file()
+
+        def fake_skip(command, **kwargs):
+            return SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "开始处理作品：6a4dc64100000000220147df\n"
+                    "图片_1.png 文件已存在，跳过下载\n作品处理完成"
+                ),
+                stderr="",
+            )
+
+        with patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_skip):
+            repeated = engine.download_one("http://xhslink.com/o/test", output)
+        assert repeated.success and repeated.image_count == 1
+    print("v2_local_cli_adapter: PASS")
+
 if __name__ == "__main__":
     test_extract_urls()
     test_extract_long_urls()
@@ -81,4 +131,5 @@ if __name__ == "__main__":
     test_url_type_detection()
     test_sanitize()
     test_extract_ssr_state()
+    test_v2_local_cli_adapter()
     print("\nAll tests passed!")

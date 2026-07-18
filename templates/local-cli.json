@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "engine": "JoeanAmier/XHS-Downloader",
+  "license": "GPL-3.0",
+  "integration": "independent-local-cli",
+  "discovery_order": [
+    "--engine-home",
+    "XHS_DOWNLOADER_HOME",
+    "./vendor/XHS_Downloader",
+    "../XHS_Downloader",
+    "D:/AICode/XHS_Downloader"
+  ],
+  "image_format": "PNG",
+  "cookie_required": false,
+  "fallback": "none; V1 watermark engine is explicit only"
+}

@@ -7,7 +7,8 @@ import webbrowser
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
-from xhs_dl.core.downloader import XhsDownloader, extract_urls_from_text
+from xhs_dl.core.downloader import extract_urls_from_text
+from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
 
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -55,7 +56,7 @@ textarea::placeholder{color:#ccc}
 <body>
 <div class="card">
   <h1>xhs-dl</h1>
-  <p class="sub">小红书笔记下载器 V1.0 | 无需登录 | 支持短链接 &amp; 分享文本</p>
+  <p class="sub">小红书无水印下载器 V2.0 | 本地引擎 | 支持短链接 &amp; 分享文本</p>
 
   <textarea id="input" placeholder="粘贴小红书分享文本或链接，每行一个，也支持整段粘贴&#10;&#10;示例:&#10;快存下！vivo X300隐藏功能！ http://xhslink.com/o/xxxxx&#10;http://xhslink.com/o/yyyyy"></textarea>
 
@@ -76,7 +77,7 @@ textarea::placeholder{color:#ccc}
     <div class="summary" id="summary"></div>
   </div>
 
-  <div class="note">提示: 下载的图片带有小红书平台水印（服务端烧录，无法通过 URL 去除）。视频笔记暂仅下载封面图。</div>
+  <div class="note">提示: 默认提取无平台水印的原始媒体。批量任务会逐条慢速执行，请保持本窗口开启。</div>
 </div>
 
 <script>
@@ -146,7 +147,11 @@ class Handler(BaseHTTPRequestHandler):
 
             from xhs_dl.core.downloader import DELAY_MODES
             delay = DELAY_MODES.get(mode, DELAY_MODES["cautious"])
-            dl = XhsDownloader(output_dir=output_dir, delay=delay)
+            try:
+                dl = XhsV2Downloader(output_dir=output_dir, delay=delay)
+            except EngineNotReady as exc:
+                self._json({"error": str(exc)}, 503)
+                return
             result = dl.download(urls)
 
             items = []

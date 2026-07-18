@@ -5,4 +5,5 @@ dist/
 build/
 .eggs/
 xhs_downloads/
+v2_test_output/
 *.egg

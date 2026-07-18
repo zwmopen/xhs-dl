@@ -6,8 +6,13 @@ from pathlib import Path
 
 
 def main():
+    # Windows 旧式控制台可能使用 GBK；上游标题包含生僻字符时仍应安全显示。
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+
     parser = argparse.ArgumentParser(
-        description="xhs-dl: 小红书笔记下载器 (V1)",
+        description="xhs-dl: 小红书无水印下载器 (V2)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -28,7 +33,7 @@ def main():
 
 支持直接粘贴整段分享文本，工具自动提取链接。
 
-注意: 下载的图片带有小红书平台水印（服务端烧录，无法去除）。
+默认使用本地无水印引擎。需要旧版网页解析时可显式传 --engine v1。
         """
     )
     parser.add_argument("urls", nargs="*", help="小红书链接或分享文本")
@@ -38,6 +43,12 @@ def main():
     parser.add_argument("--mode", default="cautious",
                         choices=["fast", "normal", "cautious", "slow", "very-slow"],
                         help="延迟模式 (默认: cautious)")
+    parser.add_argument("--engine", choices=["v2", "v1"], default="v2",
+                        help="下载引擎：v2 无水印（默认），v1 旧版水印图")
+    parser.add_argument("--engine-home",
+                        help="XHS_Downloader 本地目录（通常无需填写）")
+    parser.add_argument("--timeout", type=int, default=300,
+                        help="每条笔记最大等待秒数（默认: 300）")
     args = parser.parse_args()
 
     # 收集链接
@@ -63,7 +74,7 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  xhs-dl v1.0  小红书笔记下载器")
+    print("  xhs-dl v2.0  小红书无水印下载器")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:
@@ -78,7 +89,22 @@ def main():
         extra = f" [{nr.image_success}图]" if nr.success and nr.image_count else ""
         print(f"  [{tag}] [{i}/{total}] {name}{extra}")
 
-    dl = XhsDownloader(output_dir=args.output, delay=delay, on_progress=on_progress)
+    if args.engine == "v1":
+        print("  [提醒] 正在使用旧版 V1，引擎输出可能带平台水印。")
+        dl = XhsDownloader(output_dir=args.output, delay=delay, on_progress=on_progress)
+    else:
+        from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
+        try:
+            dl = XhsV2Downloader(
+                output_dir=args.output,
+                delay=delay,
+                on_progress=on_progress,
+                engine_home=args.engine_home,
+                timeout=args.timeout,
+            )
+        except EngineNotReady as exc:
+            print(f"\n[错误] {exc}")
+            sys.exit(2)
     result = dl.download(all_urls)
 
     print(f"\n{'='*60}")
