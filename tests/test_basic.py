@@ -1,8 +1,11 @@
 import sys, os
 import tempfile
+import json
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from urllib.request import Request, urlopen
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from xhs_dl.core.downloader import extract_urls_from_text
 
@@ -123,6 +126,46 @@ def test_v2_local_cli_adapter():
         assert repeated.success and repeated.image_count == 1
     print("v2_local_cli_adapter: PASS")
 
+def test_web_job_api():
+    """验证可视化界面的后台任务创建与轮询协议。"""
+    from http.server import HTTPServer
+    from xhs_dl.web import app
+
+    class FakeDownloader:
+        def __init__(self, **kwargs):
+            pass
+
+    app.JOBS.clear()
+    server = HTTPServer(("127.0.0.1", 0), app.Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        root = f"http://127.0.0.1:{server.server_port}"
+        page = urlopen(root + "/", timeout=5).read().decode("utf-8")
+        assert 'data-theme="neo"' in page
+        assert "xhs-dl-theme" in page
+
+        payload = json.dumps({
+            "text": "http://xhslink.com/o/testcode",
+            "output_dir": "./test-output",
+            "mode": "cautious",
+        }).encode("utf-8")
+        request = Request(
+            root + "/api/jobs", data=payload,
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        with patch("xhs_dl.web.app.XhsV2Downloader", FakeDownloader), \
+                patch("xhs_dl.web.app.threading.Thread.start", return_value=None):
+            response = urlopen(request, timeout=5)
+            created = json.loads(response.read().decode("utf-8"))
+        assert response.status == 202
+        job = json.loads(urlopen(root + "/api/jobs/" + created["job_id"], timeout=5).read().decode("utf-8"))
+        assert job["status"] == "queued" and job["total"] == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+    print("web_job_api: PASS")
+
 if __name__ == "__main__":
     test_extract_urls()
     test_extract_long_urls()
@@ -132,4 +175,5 @@ if __name__ == "__main__":
     test_sanitize()
     test_extract_ssr_state()
     test_v2_local_cli_adapter()
+    test_web_job_api()
     print("\nAll tests passed!")

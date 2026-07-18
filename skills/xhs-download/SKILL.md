@@ -25,6 +25,7 @@ Download only public notes the user explicitly provides or authorizes. Keep all 
 - Use `cautious` by default. Use `fast` only for a small user-approved test batch.
 - Preserve creator-embedded marks; remove only the platform-delivered watermark by selecting original media.
 - Read `references/safety.md` before changing engines, network behavior, or installation scripts.
+- Read `references/visual-language.md` before changing the Web interface.
 
 ## Interfaces
 

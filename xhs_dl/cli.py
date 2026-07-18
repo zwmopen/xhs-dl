@@ -83,7 +83,7 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  xhs-dl v2.1  小红书无水印下载器")
+    print("  xhs-dl v2.2  小红书无水印下载器")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:
