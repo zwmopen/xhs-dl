@@ -61,6 +61,13 @@ textarea::placeholder{color:#ccc}
 
   <div class="row">
     <input id="outdir" type="text" placeholder="保存目录（留空默认 ./xhs_downloads）">
+    <select id="mode" style="padding:10px 14px;border:2px solid #eee;border-radius:12px;font-size:14px;outline:none;background:#fff;cursor:pointer;min-width:130px">
+      <option value="fast">快速 3-8秒</option>
+      <option value="normal">标准 8-15秒</option>
+      <option value="cautious" selected>保守 25-45秒</option>
+      <option value="slow">慢速 55-85秒</option>
+      <option value="very-slow">极慢 110-160秒</option>
+    </select>
     <button class="btn" id="go" onclick="start()">开始下载</button>
   </div>
 
@@ -90,7 +97,7 @@ function start(){
   fetch('/api/download',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text, output_dir: document.getElementById('outdir').value.trim() || './xhs_downloads'})
+    body:JSON.stringify({text, output_dir: document.getElementById('outdir').value.trim() || './xhs_downloads', mode: document.getElementById('mode').value})
   }).then(r=>r.json()).then(data=>{
     if(data.error){addLog(data.error,'fail')}
     else{data.items.forEach(it=>{
@@ -126,6 +133,7 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length))
             text = body.get("text", "")
             output_dir = body.get("output_dir", "./xhs_downloads")
+            mode = body.get("mode", "cautious")
 
             if not text.strip():
                 self._json({"error": "请输入链接或分享文本"})
@@ -136,7 +144,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"error": "未检测到有效链接"})
                 return
 
-            dl = XhsDownloader(output_dir=output_dir, delay=(2, 5))
+            from xhs_dl.core.downloader import DELAY_MODES
+            delay = DELAY_MODES.get(mode, DELAY_MODES["cautious"])
+            dl = XhsDownloader(output_dir=output_dir, delay=delay)
             result = dl.download(urls)
 
             items = []

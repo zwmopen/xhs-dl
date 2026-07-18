@@ -35,6 +35,22 @@ HEADERS = {
     "Accept-Encoding": "gzip, deflate, br",
 }
 
+# 预设延迟模式（秒）：(笔记间隔最小, 笔记间隔最大)
+# 选用建议：
+#   fast      3-8秒     测试少量用，风险高
+#   normal    8-15秒    日常 10 条以内
+#   cautious  25-45秒   20 条左右推荐
+#   slow      55-85秒   50 条以上
+#   very-slow 110-160秒 已被风控过才用
+DELAY_MODES = {
+    "fast": (3, 8),
+    "normal": (8, 15),
+    "cautious": (25, 45),
+    "slow": (55, 85),
+    "very-slow": (110, 160),
+}
+DEFAULT_MODE = "cautious"
+
 DOWNLOAD_HEADERS = {
     "User-Agent": HEADERS["User-Agent"],
     "Referer": "https://www.xiaohongshu.com/",

@@ -46,7 +46,24 @@ xhs-dl -f links.txt
 
 # 指定保存目录
 xhs-dl -f links.txt -o ./我的笔记
+
+# 指定延迟模式（默认 cautious）
+xhs-dl -f links.txt --mode fast          # 快速 3-8秒，测试少量用
+xhs-dl -f links.txt --mode cautious      # 保守 25-45秒，20条左右推荐
+xhs-dl -f links.txt --mode slow          # 慢速 55-85秒，50条以上
 ```
+
+#### 延迟模式
+
+| 模式 | 间隔 | 适用场景 |
+|------|------|---------|
+| `fast` | 3-8秒 | 测试少量用，风险高 |
+| `normal` | 8-15秒 | 日常 10 条以内 |
+| `cautious` | 25-45秒 | 20 条左右推荐（默认）|
+| `slow` | 55-85秒 | 50 条以上 |
+| `very-slow` | 110-160秒 | 已被风控过才用 |
+
+> 20 条笔记用 cautious 模式约需 8-15 分钟。CLI 会自动显示预计耗时。
 
 ### 方式二：Web 界面
 
