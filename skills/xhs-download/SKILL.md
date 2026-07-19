@@ -25,12 +25,13 @@ Download only public notes the user explicitly provides or authorizes. Keep all 
 - Use `cautious` by default. Use `fast` only for a small user-approved test batch.
 - Preserve creator-embedded marks; remove only the platform-delivered watermark by selecting original media.
 - Read `references/safety.md` before changing engines, network behavior, or installation scripts.
-- Read `references/visual-language.md` before changing any Web, Windows, or Android interface.
+- Read `references/visual-language.md` before changing any Web, Windows, Android, or iPhone interface.
 
 ## Interfaces
 
-- Desktop UI: run `xhs-dl-desktop` or the portable `xhs-dl.exe`.
-- Android UI: install the release APK, paste or share text into “小红书原图”, and find results under `Download/xhs-dl`.
+- Desktop UI: run `xhs-dl-desktop` or the portable `红薯下载.exe`.
+- Android UI: install the release APK, paste or share text into “红薯下载”, and use either `Download/红薯下载` or a folder authorized in Settings.
+- iPhone UI: build the SwiftUI client under `ios/`; use its local Files default or a user-authorized Files/iCloud Drive directory. It is independent from the other clients.
 - Legacy visual UI: run `xhs-dl-web` or `python -m xhs_dl.web.app`.
 - Human CLI: run `xhs-dl "<share text>"`.
 - Agent/OpenClaw: use `scripts/check.py` then `scripts/download.py`.

@@ -4,11 +4,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path $PSScriptRoot).Path
+$ProductName = -join ([char[]](0x7EA2, 0x85AF, 0x4E0B, 0x8F7D))
 $BuildRoot = Join-Path $ProjectRoot "build\portable"
 $OutputRoot = Join-Path $BuildRoot "output"
-$StageRoot = Join-Path $BuildRoot "stage\xhs-dl-portable-v$Version"
-$InstallRoot = Join-Path $ProjectRoot "dist\xhs-dl-v$Version-portable"
-$ExeName = "红薯下载.exe"
+$StageRoot = Join-Path $BuildRoot "stage\$ProductName-portable-v$Version"
+$InstallRoot = Join-Path $ProjectRoot "dist\$ProductName-v$Version-portable"
+$ExeName = "$ProductName.exe"
 
 foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
     $full = [IO.Path]::GetFullPath($target)
@@ -18,7 +19,7 @@ foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
 }
 
 python -m PyInstaller --noconfirm --clean --onefile --windowed `
-    --name "红薯下载" `
+    --name $ProductName `
     --icon (Join-Path $ProjectRoot "assets\red-sweet-potato-download.ico") `
     --paths $ProjectRoot `
     --collect-all customtkinter `
@@ -43,7 +44,7 @@ if (Test-Path -LiteralPath $InstallRoot) {
 }
 Copy-Item -LiteralPath $StageRoot -Destination $InstallRoot -Recurse
 
-$Archive = Join-Path $ProjectRoot "dist\xhs-dl-v$Version-portable-windows.zip"
+$Archive = Join-Path $ProjectRoot "dist\$ProductName-v$Version-portable-windows.zip"
 if (Test-Path -LiteralPath $Archive) {
     Remove-Item -LiteralPath $Archive -Force
 }

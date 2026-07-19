@@ -22,3 +22,7 @@
 - V2.3.0 桌面回归：Web 迁移桌面时遗漏双主题切换，固定高度设置框在高 DPI 下裁掉保存按钮。后续所有跨端版本把双主题持久化、100%–175% DPI、1280×720、设置底部操作和安卓真机列为发布阻断项；详见 `开发手册.md`。
 - V2.3.1 恢复 Windows 双主题并把设置内容改为可滚动、主保存按钮固定在可视底部；实际 DPI 截图确认完整。
 - Android V1.0.0 在小米 23013RK75C 真机安装，neo/glass、主题持久化、设置与历史弹窗、分享入口均通过。真实公开笔记生成 6 张无平台水印 PNG 和 `文案.txt`；H5 展示图带水印，必须提取媒体 token 再请求 `ci.xiaohongshu.com` 原图 CDN。
+- 产品统一更名为“红薯下载”，明确 Windows、Android、iPhone 是三套独立客户端，不做连接与云同步。
+- Android V1.1.0 新增独立设置与帮助页、系统自选目录、说明和手动更新。Redmi K60 真机授权目录后真实下载“小米15 Ultra”笔记成功，生成 6 张 PNG 与文案。
+- 新增 iOS V0.1.0 SwiftUI 源码。首轮 macOS CI 揭示 `.withSecurityScope` 书签选项在 iOS 不可用，改用 `.minimalBookmark` 并在实际访问时 start/stop security-scoped access 后，Xcode 16.4 模拟器编译通过。
+- 新图标和三端界面统一采用低饱和冷灰蓝、拟态悬浮 / 克制玻璃；目录设置、使用说明和手动更新检测列为跨端交付项。

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-iOS V0.1.0 源码预览版。已完成 SwiftUI 界面、公开笔记解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。当前 Windows 开发机无法运行 Xcode、签名 IPA 或安装到 iPhone，因此不能把源码静态检查冒充为真机通过。
+iOS V0.1.0 源码预览版。已完成 SwiftUI 界面、公开笔记解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。代码已在 GitHub 的 macOS 15 / Xcode 16.4 构建机完成无签名 iPhone Simulator 编译。当前 Windows 开发机仍无法签名 IPA 或安装到 iPhone，因此不把模拟器编译冒充为真机通过。
 
 ## 在 Mac 上构建
 
@@ -15,7 +15,7 @@ iOS V0.1.0 源码预览版。已完成 SwiftUI 界面、公开笔记解析、原
 ## 数据位置
 
 - 默认下载：App 的 Documents/红薯下载，可在“文件”App 中看到。
-- 自选目录：使用系统文件夹选择器保存安全书签，授权可随时在设置中恢复默认。
+- 自选目录：使用系统文件夹选择器保存持久书签，写入期间启用 security-scoped access，授权可随时在设置中恢复默认。
 - 历史：Application Support/history.json，仅在本机保存。
 
 ## 安全边界

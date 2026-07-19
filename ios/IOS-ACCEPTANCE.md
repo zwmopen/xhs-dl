@@ -1,5 +1,7 @@
 # iPhone 真机验收清单
 
+- [x] GitHub macOS 15 / Xcode 16.4 无签名 iPhone Simulator 编译通过。
+
 - [ ] Xcode Debug 构建无错误、无新增警告。
 - [ ] iPhone 安装启动，应用名和图标显示为“红薯下载”。
 - [ ] 拟态悬浮 / 克制玻璃切换、重启持久化、深浅背景对比正常。
