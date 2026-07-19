@@ -23,7 +23,7 @@ actor DownloadStore {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-        let bookmark = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+        let bookmark = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
         UserDefaults.standard.set(bookmark, forKey: bookmarkKey)
         UserDefaults.standard.set(url.lastPathComponent, forKey: folderNameKey)
     }
@@ -62,7 +62,7 @@ actor DownloadStore {
             return (try defaultRoot(), false)
         }
         var stale = false
-        let url = try URL(resolvingBookmarkData: data, options: [.withSecurityScope, .withoutUI], relativeTo: nil, bookmarkDataIsStale: &stale)
+        let url = try URL(resolvingBookmarkData: data, options: [.withoutUI], relativeTo: nil, bookmarkDataIsStale: &stale)
         if stale { try rememberFolder(url) }
         guard url.startAccessingSecurityScopedResource() else {
             clearCustomFolder()

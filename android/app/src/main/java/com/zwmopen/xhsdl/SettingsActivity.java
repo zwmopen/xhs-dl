@@ -195,6 +195,12 @@ public final class SettingsActivity extends Activity {
         try (Cursor cursor = getContentResolver().query(uri, new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) return cursor.getString(0);
         } catch (Exception ignored) {}
+        try {
+            String documentId = DocumentsContract.getTreeDocumentId(uri);
+            int separator = documentId.lastIndexOf(':');
+            String name = separator >= 0 ? documentId.substring(separator + 1) : documentId;
+            if (!name.isBlank()) return name;
+        } catch (Exception ignored) {}
         return "已选择的文件夹";
     }
 
