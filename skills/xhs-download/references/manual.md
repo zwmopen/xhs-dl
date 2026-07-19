@@ -12,7 +12,7 @@
 - Text file: `python scripts/download.py --file "D:\links.txt" --output "D:\Download\小红书"`
 - Visual interface: run `启动Web版.bat` from the application folder.
 
-The command returns JSON and writes `xhs-dl-batch.json`. Each successful note folder contains `xhs-dl-result.json`.
+The command prints JSON for the calling agent. Download folders contain media and `文案.txt`; centralized history is stored at `%LOCALAPPDATA%\xhs-dl\history.json`.
 
 ## Failure handling
 

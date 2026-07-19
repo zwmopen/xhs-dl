@@ -81,7 +81,7 @@ def test_extract_ssr_state():
     print("extract_ssr_state: PASS")
 
 def test_v2_local_cli_adapter():
-    """不访问网络，验证 V2 CLI 参数、结果识别和本地清单。"""
+    """不访问网络，验证元数据、文案、命名和集中历史。"""
     from xhs_dl.core.v2_downloader import LocalCliEngine
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
@@ -91,37 +91,58 @@ def test_v2_local_cli_adapter():
         (engine_home / "main.py").write_text("", encoding="utf-8")
         (engine_home / ".venv" / "Scripts" / "python.exe").write_bytes(b"")
         output = root / "downloads"
+        metadata = {
+            "作品ID": "6a4dc64100000000220147df",
+            "作品标题": "测试标题",
+            "作品描述": "这是正文",
+            "作品标签": "数码 技巧",
+            "作者昵称": "作者",
+            "评论数量": "128",
+            "点赞数量": "3560",
+        }
 
         def fake_run(command, **kwargs):
-            assert "--image_format" in command and "PNG" in command
+            assert "--work-path" in command and "--folder-name" in command
+            assert kwargs["env"]["PYTHONPATH"] == str(engine_home.resolve())
             note_dir = output / "2026-07-18_12.00.00_作者_测试标题"
             note_dir.mkdir(parents=True)
             (note_dir / "图片_1.png").write_bytes(b"fake-png")
             return SimpleNamespace(
                 returncode=0,
-                stdout="开始处理作品：6a4dc64100000000220147df\n作品处理完成",
+                stdout=("开始处理作品：6a4dc64100000000220147df\n"
+                        "__XHS_DL_METADATA__" + json.dumps(metadata, ensure_ascii=False)),
                 stderr="",
             )
 
         engine = LocalCliEngine(str(engine_home))
-        with patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_run):
+        with patch.dict(os.environ, {"LOCALAPPDATA": str(root / "appdata")}), \
+                patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_run):
             result = engine.download_one("http://xhslink.com/o/test", output)
         assert result.success
         assert result.note_id == "6a4dc64100000000220147df"
         assert result.image_count == 1
-        assert (Path(result.save_dir) / "xhs-dl-result.json").is_file()
+        assert Path(result.save_dir).name == "评128-赞3560-测试标题-作者"
+        copy_text = (Path(result.save_dir) / "文案.txt").read_text(encoding="utf-8-sig")
+        assert "标题：测试标题" in copy_text and "正文：\n这是正文" in copy_text
+        assert "#数码 #技巧" in copy_text
+        assert not list(output.rglob("*.json"))
+        assert not list(output.rglob("*.db"))
+        history = json.loads((root / "appdata" / "xhs-dl" / "history.json").read_text("utf-8"))
+        assert history == [{"下载网址": "http://xhslink.com/o/test", "笔记ID": result.note_id, "标题": "测试标题"}]
 
         def fake_skip(command, **kwargs):
             return SimpleNamespace(
                 returncode=0,
                 stdout=(
                     "开始处理作品：6a4dc64100000000220147df\n"
-                    "图片_1.png 文件已存在，跳过下载\n作品处理完成"
+                    "图片_1.png 文件已存在，跳过下载\n"
+                    "__XHS_DL_METADATA__" + json.dumps(metadata, ensure_ascii=False)
                 ),
                 stderr="",
             )
 
-        with patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_skip):
+        with patch.dict(os.environ, {"LOCALAPPDATA": str(root / "appdata")}), \
+                patch("xhs_dl.core.v2_downloader.subprocess.run", side_effect=fake_skip):
             repeated = engine.download_one("http://xhslink.com/o/test", output)
         assert repeated.success and repeated.image_count == 1
     print("v2_local_cli_adapter: PASS")
@@ -168,6 +189,25 @@ def test_web_job_api():
         server.shutdown()
         server.server_close()
     print("web_job_api: PASS")
+
+
+def test_portable_and_update_versions():
+    from xhs_dl.desktop.app import automatic_mode, version_tuple
+    from xhs_dl.portable import configure_engine_home
+
+    assert version_tuple("v2.3.0") > version_tuple("2.2.1")
+    assert automatic_mode(1) == "cautious"
+    assert automatic_mode(20) == "cautious"
+    assert automatic_mode(21) == "slow"
+    assert automatic_mode(51) == "very-slow"
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        executable = root / "app" / "小红书无水印下载器.exe"
+        engine = root / "XHS_Downloader"
+        (engine / "source").mkdir(parents=True)
+        (engine / "main.py").write_text("", encoding="utf-8")
+        with patch.dict(os.environ, {}, clear=False):
+            assert configure_engine_home(executable) == engine.resolve()
 
 if __name__ == "__main__":
     test_extract_urls()

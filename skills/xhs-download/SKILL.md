@@ -1,6 +1,6 @@
 ---
 name: xhs-download
-description: Download public Xiaohongshu or RedNote notes from user-provided share text, short links, or long links to local original media without platform watermarks or account login. Use for single or batch downloads, local archiving, media extraction, retrying failed public notes, and checking download manifests. Never use for private, access-controlled, or unauthorized content.
+description: Download public Xiaohongshu or RedNote notes from user-provided share text, short links, or long links to local original media without platform watermarks or account login. Use for single or batch downloads, local archiving, media extraction, retrying failed public notes, and checking centralized download history. Never use for private, access-controlled, or unauthorized content.
 ---
 
 # Xiaohongshu Download
@@ -14,7 +14,7 @@ Download only public notes the user explicitly provides or authorizes. Keep all 
 3. Run `python scripts/download.py --text "<share text or links>" --output "<folder>" --mode cautious`.
    For a UTF-8 text file, replace `--text` with `--file <path>`.
 4. Read the JSON printed by the script. Report success only when `success` is positive and the listed local files exist.
-5. Point the user to `xhs-dl-batch.json` and each note's `xhs-dl-result.json`.
+5. Point the user to the downloaded media, `文案.txt`, and centralized `%LOCALAPPDATA%\xhs-dl\history.json` when history is needed.
 
 ## Guardrails
 
@@ -29,7 +29,8 @@ Download only public notes the user explicitly provides or authorizes. Keep all 
 
 ## Interfaces
 
-- Visual UI: run `xhs-dl-web` or `python -m xhs_dl.web.app`.
+- Desktop UI: run `xhs-dl-desktop` or the portable `xhs-dl.exe`.
+- Legacy visual UI: run `xhs-dl-web` or `python -m xhs_dl.web.app`.
 - Human CLI: run `xhs-dl "<share text>"`.
 - Agent/OpenClaw: use `scripts/check.py` then `scripts/download.py`.
 - Installation and shared OpenClaw setup: read `references/manual.md` and `references/openclaw.md`.

@@ -6,7 +6,6 @@
 """
 
 import json
-import locale
 import logging
 import os
 import random
@@ -18,11 +17,13 @@ from typing import Callable, List, Optional, Tuple
 
 from .downloader import DELAY_MODES, extract_urls_from_text
 from .models import DownloadResult, NoteResult
+from xhs_dl.storage import add_history
 
 logger = logging.getLogger(__name__)
 
 MEDIA_EXTENSIONS = {".png", ".webp", ".jpg", ".jpeg", ".heic", ".mp4", ".mov"}
 VIDEO_EXTENSIONS = {".mp4", ".mov"}
+METADATA_MARKER = "__XHS_DL_METADATA__"
 
 
 class EngineNotReady(RuntimeError):
@@ -87,40 +88,42 @@ class LocalCliEngine:
         output_dir = output_dir.resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
         before = self._media_files(output_dir)
+        bridge = Path(__file__).resolve().parents[1] / "engine_bridge.py"
         command = [
-            str(self.python), str(self.home / "main.py"),
+            str(self.python), str(bridge),
             "--url", url,
-            "--work_path", str(output_dir.parent),
-            "--folder_name", output_dir.name,
-            "--image_format", "PNG",
-            "--record_data", "false",
-            "--download_record", "false",
-            "--folder_mode", "true",
-            "--author_archive", "false",
-            "--language", "zh_CN",
+            "--work-path", str(output_dir.parent),
+            "--folder-name", output_dir.name,
         ]
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(self.home)
         try:
             completed = subprocess.run(
                 command,
                 cwd=str(self.home),
                 capture_output=True,
                 text=True,
-                encoding=locale.getpreferredencoding(False),
+                encoding="utf-8",
                 errors="replace",
                 timeout=self.timeout,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                env=environment,
             )
         except subprocess.TimeoutExpired:
+            self._remove_engine_database(output_dir)
             return NoteResult(url=url, error=f"本地引擎超过 {self.timeout} 秒未完成", engine="local-cli")
+        self._remove_engine_database(output_dir)
 
         stdout = (completed.stdout or "") + (completed.stderr or "")
         clean_stdout = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", stdout)
+        metadata = self._extract_metadata(clean_stdout)
         after = self._media_files(output_dir)
         new_files = sorted(
             path for path, signature in after.items()
             if path not in before or before[path] != signature
         )
         note_id_match = re.search(r"开始处理作品[：:]\s*([a-f0-9]{24})", clean_stdout)
+        note_id = str(metadata.get("作品ID") or (note_id_match.group(1) if note_id_match else ""))
 
         # 上游会主动跳过已存在文件。通过输出中的完整文件名映射回本地结果，
         # 让重复运行成为成功的幂等操作，而不是误报“未生成文件”。
@@ -135,29 +138,93 @@ class LocalCliEngine:
             detail = self._last_useful_line(clean_stdout)
             return NoteResult(
                 url=url,
-                note_id=note_id_match.group(1) if note_id_match else "",
+                note_id=note_id,
                 error=detail or f"本地引擎未生成媒体文件（退出码 {completed.returncode}）",
                 engine="local-cli",
             )
 
         note_dirs = [p.parent for p in selected_files]
         note_dir = max(set(note_dirs), key=note_dirs.count)
+        note_dir, selected_files = self._rename_note_folder(note_dir, selected_files, metadata)
         image_files = [p for p in selected_files if p.suffix.lower() not in VIDEO_EXTENSIONS]
-        title = self._title_from_folder(note_dir.name)
+        title = str(metadata.get("作品标题") or self._title_from_folder(note_dir.name))
+        author = str(metadata.get("作者昵称") or "")
+        description = str(metadata.get("作品描述") or "")
+        topics = str(metadata.get("作品标签") or "")
         result = NoteResult(
             url=url,
             success=True,
-            note_id=note_id_match.group(1) if note_id_match else "",
+            note_id=note_id,
             title=title,
+            author=author,
             note_type="video" if any(p.suffix.lower() in VIDEO_EXTENSIONS for p in selected_files) else "normal",
             save_dir=str(note_dir),
             image_count=len(image_files),
             image_success=len(image_files),
+            desc=description,
+            topics=topics,
             engine="local-cli",
             media_format=", ".join(sorted({p.suffix.lstrip(".").upper() for p in selected_files})),
         )
-        self._write_manifest(note_dir, result, selected_files)
+        self._write_copy_text(note_dir, result)
+        add_history(url, result.note_id, result.title)
         return result
+
+    @staticmethod
+    def _remove_engine_database(output_dir: Path) -> None:
+        database = output_dir / "ExploreData.db"
+        try:
+            if database.is_file():
+                database.unlink()
+        except OSError:
+            logger.warning("无法清理上游空数据文件：%s", database)
+
+    @staticmethod
+    def _extract_metadata(text: str) -> dict:
+        for line in reversed(text.splitlines()):
+            if line.startswith(METADATA_MARKER):
+                try:
+                    value = json.loads(line[len(METADATA_MARKER):])
+                    return value if isinstance(value, dict) else {}
+                except json.JSONDecodeError:
+                    return {}
+        return {}
+
+    @staticmethod
+    def _safe_name(value: str, limit: int = 56) -> str:
+        value = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(value or "")).strip(" .-")
+        return value[:limit] or "未知"
+
+    @classmethod
+    def _rename_note_folder(cls, note_dir: Path, files: List[Path], metadata: dict):
+        if not metadata:
+            return note_dir, files
+        comments = cls._safe_name(metadata.get("评论数量") or "未知", 16)
+        likes = cls._safe_name(metadata.get("点赞数量") or "未知", 16)
+        title = cls._safe_name(metadata.get("作品标题") or "未命名笔记")
+        author = cls._safe_name(metadata.get("作者昵称") or "未知作者", 32)
+        desired = note_dir.parent / f"评{comments}-赞{likes}-{title}-{author}"
+        if desired != note_dir:
+            if desired.exists():
+                merged = []
+                for path in files:
+                    target = desired / path.relative_to(note_dir)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    if target.exists():
+                        path.unlink()
+                    else:
+                        path.rename(target)
+                    merged.append(target)
+                try:
+                    note_dir.rmdir()
+                except OSError:
+                    pass
+                files = merged
+            else:
+                note_dir.rename(desired)
+                files = [desired / path.relative_to(note_dir) for path in files]
+            note_dir = desired
+        return note_dir, files
 
     @staticmethod
     def _last_useful_line(text: str) -> str:
@@ -170,19 +237,17 @@ class LocalCliEngine:
         return re.sub(r"^\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}\.\d{2}_", "", name)
 
     @staticmethod
-    def _write_manifest(note_dir: Path, result: NoteResult, files: List[Path]) -> None:
-        payload = {
-            "version": 2,
-            "engine": result.engine,
-            "source_url": result.url,
-            "note_id": result.note_id,
-            "title": result.title,
-            "media_format": result.media_format,
-            "files": [p.name for p in files],
-        }
-        (note_dir / "xhs-dl-result.json").write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    def _write_copy_text(note_dir: Path, result: NoteResult) -> None:
+        topics = " ".join(
+            topic if topic.startswith("#") else "#" + topic
+            for topic in result.topics.split()
         )
+        content = (
+            f"标题：{result.title}\n\n"
+            f"正文：\n{result.desc or '（正文为空）'}\n\n"
+            f"话题：{topics or '（无话题）'}\n"
+        )
+        (note_dir / "文案.txt").write_text(content, encoding="utf-8-sig")
 
 
 class XhsV2Downloader:
@@ -216,35 +281,8 @@ class XhsV2Downloader:
         for index, url in enumerate(unique, 1):
             note_result = self.engine.download_one(url, root)
             result.results.append(note_result)
-            self._write_batch_manifest(root, result)
             if self.on_progress:
                 self.on_progress(note_result, index, len(unique))
             if index < len(unique):
                 time.sleep(random.uniform(*self.delay))
         return result
-
-    @staticmethod
-    def _write_batch_manifest(root: Path, result: DownloadResult) -> None:
-        payload = {
-            "version": 2,
-            "success": result.success_count,
-            "failed": result.fail_count,
-            "total": result.total,
-            "items": [
-                {
-                    "url": item.url,
-                    "success": item.success,
-                    "note_id": item.note_id,
-                    "title": item.title,
-                    "save_dir": item.save_dir,
-                    "image_count": item.image_count,
-                    "media_format": item.media_format,
-                    "engine": item.engine,
-                    "error": item.error,
-                }
-                for item in result.results
-            ],
-        }
-        (root / "xhs-dl-batch.json").write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-        )

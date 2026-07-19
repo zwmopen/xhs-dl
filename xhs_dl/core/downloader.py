@@ -39,13 +39,13 @@ HEADERS = {
 # 选用建议：
 #   fast      3-8秒     测试少量用，风险高
 #   normal    8-15秒    日常 10 条以内
-#   cautious  25-45秒   20 条左右推荐
+#   cautious  35-55秒   稳定优先，20 条左右推荐
 #   slow      55-85秒   50 条以上
 #   very-slow 110-160秒 已被风控过才用
 DELAY_MODES = {
     "fast": (3, 8),
     "normal": (8, 15),
-    "cautious": (25, 45),
+    "cautious": (35, 55),
     "slow": (55, 85),
     "very-slow": (110, 160),
 }

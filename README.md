@@ -7,8 +7,9 @@
 - 默认下载无平台水印的原始媒体，图片保存为 PNG
 - 支持 `xhslink.com` 短链接与带 `xsec_token` 的小红书长链接
 - 整段粘贴、批量去重、慢速执行、逐条回报
-- 每条成功结果写入 `xhs-dl-result.json`，便于断点排查和后续 AI 处理
-- 批次进度实时写入 `xhs-dl-batch.json`，中途退出也保留已完成结果
+- 每篇笔记生成 `文案.txt`，包含标题、正文和话题
+- 成功历史集中写入应用数据目录的一个 `history.json`，下载目录不散落 JSON
+- 文件夹按 `评数-赞数-标题-作者` 命名，便于快速筛选
 - 拟态悬浮 / 克制玻璃双主题界面，主题、保存位置与下载节奏会在本机记住
 - Web 任务改为后台执行，可实时查看逐条进度，界面不会在下载时卡死
 - Web 版默认保存到当前 Windows 用户的“下载”文件夹，高级设置默认收起
@@ -23,6 +24,8 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 ## 首次安装
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
+
+推荐使用 V2.3 便携桌面版：解压 `xhs-dl-v2.3.0-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书无水印下载器.exe`。
 
 在 PowerShell 中运行：
 
@@ -52,9 +55,13 @@ xhs-dl "链接" --engine-home D:\AICode\XHS_Downloader
 xhs-dl "链接" --engine v1
 ```
 
-默认 `cautious` 模式会在笔记之间等待 25–45 秒。可选 `fast`、`normal`、`cautious`、`slow`、`very-slow`。
+桌面版默认自动判断：1 条直接采集，2–20 条随机等待 35–55 秒，21–50 条 55–85 秒，超过 50 条 110–160 秒；设置中可以手动覆盖。命令行可选 `fast`、`normal`、`cautious`、`slow`、`very-slow`。
 
-## Web 界面
+## 桌面界面
+
+桌面版提供独立窗口、设置按钮、系统文件夹选择、实时进度和更新检测。默认保存到 `C:\Users\你的用户名\Downloads`，设置会在本机记住。
+
+旧 Web 界面仍可使用：
 
 ```powershell
 xhs-dl-web
@@ -66,11 +73,13 @@ xhs-dl-web
 
 ```text
 xhs_downloads/
-└── 日期_作者_标题/
+└── 评128-赞3560-标题-作者/
     ├── 图片_1.png
     ├── 图片_2.png
-    └── xhs-dl-result.json
+    └── 文案.txt
 ```
+
+所有成功历史集中保存在 `%LOCALAPPDATA%\xhs-dl\history.json`。
 
 模板配置保存在 `templates/local-cli.json`。可用环境变量 `XHS_DOWNLOADER_HOME` 覆盖引擎位置。
 

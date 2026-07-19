@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "2.2.1"
+version = "2.3.0"
 description = "小红书无水印下载器 - 本地引擎，支持短链接和分享文本"
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = ["requests>=2.28.0"]
+dependencies = ["requests>=2.28.0", "customtkinter>=5.2.2"]
 license = {text = "MIT"}
 
 [project.scripts]
 xhs-dl = "xhs_dl.cli:main"
 xhs-dl-web = "xhs_dl.web.app:main"
+xhs-dl-desktop = "xhs_dl.desktop.app:main"
 
 [tool.setuptools.packages.find]
 include = ["xhs_dl*"]

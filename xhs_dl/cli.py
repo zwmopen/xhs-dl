@@ -27,7 +27,7 @@ def main():
 延迟模式:
   fast        3-8秒      测试少量用，风险高
   normal      8-15秒     日常 10 条以内
-  cautious    25-45秒    20 条左右推荐 (默认)
+  cautious    35-55秒    稳定优先，20 条左右推荐 (默认)
   slow        55-85秒    50 条以上
   very-slow   110-160秒  已被风控过才用
 
@@ -83,7 +83,7 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  xhs-dl v2.2.1  小红书无水印下载器")
+    print("  xhs-dl v2.3.0  小红书无水印下载器")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:

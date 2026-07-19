@@ -20,6 +20,7 @@ class NoteResult:
     image_count: int = 0
     image_success: int = 0
     desc: str = ""
+    topics: str = ""
     engine: str = ""
     media_format: str = ""
 

@@ -27,6 +27,7 @@ def main() -> int:
     try:
         from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
         from xhs_dl.core.v2_downloader import EngineNotReady, XhsV2Downloader
+        from xhs_dl.storage import history_path
     except ImportError as exc:
         print(json.dumps({
             "success": 0,
@@ -64,7 +65,7 @@ def main() -> int:
         "failed": result.fail_count,
         "total": result.total,
         "output_dir": result.output_dir,
-        "manifest": str(Path(result.output_dir) / "xhs-dl-batch.json"),
+        "history": str(history_path()),
         "items": [
             {
                 "url": item.url,

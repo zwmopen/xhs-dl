@@ -2,9 +2,10 @@
 
 ## 当前版本
 
-- 当前发布：V2.2.1
+- 当前发布：V2.3.0
 - 仓库：`https://github.com/zwmopen/xhs-dl`
-- 发布页：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.2.1`
+- 发布页：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.3.0`
+- 上一稳定备份：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.2.1`
 - 本地项目：`D:\AICode\xhs-dl`
 - 本地引擎：`D:\AICode\XHS_Downloader`
 
@@ -12,9 +13,9 @@
 
 - 公开笔记、免账号登录、原始图片/视频本地保存。
 - 短链接、长链接、整段分享文本、批量去重与分速率执行。
-- CLI、浏览器可视化界面、AI/OpenClaw 共享技能。
-- 每篇结果与批次进度均写入 JSON 清单。
-- Web 后台任务、逐条进度、拟态悬浮与克制玻璃双主题。
+- CLI、浏览器界面、Windows 独立桌面应用、AI/OpenClaw 共享技能。
+- 笔记目录只放媒体与文案.txt；精简历史集中保存到应用数据目录的 history.json。
+- 设置按钮、文件夹选择、剪贴板识别、自动频率判断、更新检测与逐条进度。
 
 ## 边界
 
