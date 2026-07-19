@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.3.1"
+    [string]$Version = "2.4.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -8,7 +8,7 @@ $BuildRoot = Join-Path $ProjectRoot "build\portable"
 $OutputRoot = Join-Path $BuildRoot "output"
 $StageRoot = Join-Path $BuildRoot "stage\xhs-dl-portable-v$Version"
 $InstallRoot = Join-Path $ProjectRoot "dist\xhs-dl-v$Version-portable"
-$ExeName = "xhs-dl.exe"
+$ExeName = "红薯下载.exe"
 
 foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
     $full = [IO.Path]::GetFullPath($target)
@@ -18,7 +18,8 @@ foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
 }
 
 python -m PyInstaller --noconfirm --clean --onefile --windowed `
-    --name "xhs-dl" `
+    --name "红薯下载" `
+    --icon (Join-Path $ProjectRoot "assets\red-sweet-potato-download.ico") `
     --paths $ProjectRoot `
     --collect-all customtkinter `
     --add-data "$(Join-Path $ProjectRoot 'xhs_dl\engine_bridge.py');xhs_dl" `

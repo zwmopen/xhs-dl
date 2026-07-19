@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.DocumentsContract;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +24,10 @@ public final class MediaSaver {
         this.context = context.getApplicationContext();
     }
 
-    public int save(NoteData note, String rootFolder, Progress progress) throws IOException {
+    public int save(NoteData note, String rootFolder, String treeUri, Progress progress) throws IOException {
+        if (treeUri != null && !treeUri.trim().isEmpty()) {
+            return saveToTree(note, Uri.parse(treeUri), progress);
+        }
         String relative = Environment.DIRECTORY_DOWNLOADS + "/" + cleanFolder(rootFolder) + "/" + note.folderName() + "/";
         int completed = 0;
         for (int i = 0; i < note.media.size(); i++) {
@@ -35,6 +39,89 @@ public final class MediaSaver {
         }
         replaceText("文案.txt", note.copyText(), relative);
         return completed;
+    }
+
+    private int saveToTree(NoteData note, Uri treeUri, Progress progress) throws IOException {
+        Uri root = DocumentsContract.buildDocumentUriUsingTree(
+                treeUri, DocumentsContract.getTreeDocumentId(treeUri));
+        Uri noteDirectory = findOrCreateDirectory(root, note.folderName());
+        int completed = 0;
+        for (int i = 0; i < note.media.size(); i++) {
+            NoteData.MediaItem item = note.media.get(i);
+            String fileName = String.format("%02d.%s", i + 1, item.extension);
+            if (findChild(noteDirectory, fileName) == null) {
+                Uri destination = DocumentsContract.createDocument(
+                        context.getContentResolver(), noteDirectory, item.mimeType, fileName);
+                if (destination == null) throw new IOException("无法在所选目录创建媒体文件");
+                writeTreeNetwork(item.url, destination);
+            }
+            completed++;
+            if (progress != null) progress.onMedia(completed, note.media.size());
+        }
+        Uri oldText = findChild(noteDirectory, "文案.txt");
+        if (oldText != null) DocumentsContract.deleteDocument(context.getContentResolver(), oldText);
+        Uri textFile = DocumentsContract.createDocument(
+                context.getContentResolver(), noteDirectory, "text/plain", "文案.txt");
+        if (textFile == null) throw new IOException("无法在所选目录创建文案文件");
+        try (OutputStream output = context.getContentResolver().openOutputStream(textFile, "w")) {
+            if (output == null) throw new IOException("无法写入文案文件");
+            output.write(note.copyText().getBytes(StandardCharsets.UTF_8));
+        }
+        return completed;
+    }
+
+    private Uri findOrCreateDirectory(Uri parent, String name) throws IOException {
+        Uri existing = findChild(parent, name);
+        if (existing != null) return existing;
+        Uri created = DocumentsContract.createDocument(
+                context.getContentResolver(), parent,
+                DocumentsContract.Document.MIME_TYPE_DIR, cleanFolder(name));
+        if (created == null) throw new IOException("无法在所选目录创建笔记文件夹");
+        return created;
+    }
+
+    private Uri findChild(Uri parent, String name) {
+        ContentResolver resolver = context.getContentResolver();
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(
+                parent, DocumentsContract.getDocumentId(parent));
+        String[] columns = {
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME
+        };
+        try (Cursor cursor = resolver.query(children, columns, null, null, null)) {
+            if (cursor == null) return null;
+            while (cursor.moveToNext()) {
+                if (name.equals(cursor.getString(1))) {
+                    return DocumentsContract.buildDocumentUriUsingTree(parent, cursor.getString(0));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private void writeTreeNetwork(String source, Uri destination) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(source).openConnection();
+        connection.setConnectTimeout(20000);
+        connection.setReadTimeout(60000);
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setRequestProperty("Referer", "https://www.xiaohongshu.com/");
+        connection.connect();
+        int status = connection.getResponseCode();
+        if (status < 200 || status >= 400) throw new IOException("媒体下载失败：HTTP " + status);
+        try (InputStream input = connection.getInputStream();
+             OutputStream output = context.getContentResolver().openOutputStream(destination, "w")) {
+            if (output == null) throw new IOException("无法写入所选目录");
+            byte[] buffer = new byte[128 * 1024];
+            int count;
+            while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
+        } catch (IOException error) {
+            try { DocumentsContract.deleteDocument(context.getContentResolver(), destination); }
+            catch (Exception ignored) {}
+            throw error;
+        } finally {
+            connection.disconnect();
+        }
     }
 
     private void writeFromNetwork(String source, String name, String mime, String relative) throws IOException {

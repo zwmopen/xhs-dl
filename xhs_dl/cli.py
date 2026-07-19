@@ -12,7 +12,7 @@ def main():
             stream.reconfigure(errors="replace")
 
     parser = argparse.ArgumentParser(
-        description="xhs-dl: 小红书无水印下载器 (V2)",
+        description="红薯下载：小红书原始媒体下载器 (V2)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -83,7 +83,7 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  xhs-dl v2.3.1  小红书无水印下载器")
+    print("  红薯下载 v2.4.0  小红书原始媒体下载器")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:

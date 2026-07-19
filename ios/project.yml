@@ -1,0 +1,25 @@
+name: RedSweetPotatoDownload
+options:
+  bundleIdPrefix: com.zwmopen
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    DEVELOPMENT_TEAM: ""
+targets:
+  RedSweetPotatoDownload:
+    type: application
+    platform: iOS
+    sources:
+      - path: RedSweetPotatoDownload
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zwmopen.redsweetpotatodownload
+        PRODUCT_NAME: 红薯下载
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: RedSweetPotatoDownload/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      testTargets: []

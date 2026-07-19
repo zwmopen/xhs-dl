@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "2.3.1"
-description = "小红书无水印下载器 - 本地引擎，支持短链接和分享文本"
+version = "2.4.0"
+description = "红薯下载 - 本地小红书原始媒体下载器，支持短链接和分享文本"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = ["requests>=2.28.0", "customtkinter>=5.2.2"]

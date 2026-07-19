@@ -14,7 +14,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
+import android.provider.DocumentsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -25,9 +25,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,7 +37,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,12 +52,6 @@ public final class MainActivity extends Activity {
     private int TEXT;
     private int MUTED;
     private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\\\"，。；：！？、）】》]+", Pattern.CASE_INSENSITIVE);
-    private static final String[] MODE_LABELS = {
-            "自动判断（推荐）", "快速（3–8 秒）", "标准（8–15 秒）",
-            "稳妥（35–55 秒）", "慢速（55–85 秒）", "极慢（110–160 秒）"
-    };
-    private static final String[] MODE_VALUES = {"auto", "fast", "normal", "cautious", "slow", "very-slow"};
-
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random random = new Random();
@@ -132,7 +122,7 @@ public final class MainActivity extends Activity {
 
         LinearLayout header = row();
         LinearLayout brand = column();
-        TextView title = text("小红书原图", 30, TEXT, true);
+        TextView title = text("红薯下载", 30, TEXT, true);
         title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
         brand.addView(title);
         brand.addView(text("公开笔记 · 手机直存 · 无需登录", 12, MUTED, false));
@@ -144,7 +134,7 @@ public final class MainActivity extends Activity {
         themeParams.rightMargin = dp(8);
         header.addView(themeButton, themeParams);
         Button settingsButton = secondaryButton("⚙  设置");
-        settingsButton.setOnClickListener(v -> showSettings());
+        settingsButton.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         header.addView(settingsButton, new LinearLayout.LayoutParams(dp(106), dp(46)));
         root.addView(header, marginBottom(20));
 
@@ -211,7 +201,7 @@ public final class MainActivity extends Activity {
         card.addView(secondary, marginTop(12));
         root.addView(card, matchWrap());
 
-        TextView footer = text("原始媒体直存 · 作者嵌入的署名会保留 · Android V1.0.0", 10, MUTED, false);
+        TextView footer = text("原始媒体直存 · 作者嵌入的署名会保留 · Android V" + BuildConfig.VERSION_NAME, 10, MUTED, false);
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, marginTop(18));
         return scroll;
@@ -275,14 +265,15 @@ public final class MainActivity extends Activity {
         XhsParser parser = new XhsParser();
         MediaSaver saver = new MediaSaver(this);
         HistoryStore history = new HistoryStore(this);
-        String rootFolder = preferences.getString("folder", "xhs-dl");
+        String rootFolder = preferences.getString("folder", "红薯下载");
+        String treeUri = preferences.getString("download_tree_uri", "");
         for (int i = 0; i < urls.size(); i++) {
             int index = i;
             String url = urls.get(i);
             try {
                 postStatus("正在解析第 " + (i + 1) + " 条", url, percent(i, urls.size()));
                 NoteData note = parser.fetch(url);
-                saver.save(note, rootFolder, (done, total) ->
+                saver.save(note, rootFolder, treeUri, (done, total) ->
                         postStatus("正在保存 · " + note.title,
                                 "媒体 " + done + " / " + total, percent(index, urls.size())));
                 history.add(note);
@@ -366,46 +357,6 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void showSettings() {
-        LinearLayout layout = column();
-        layout.setPadding(dp(22), dp(8), dp(22), 0);
-        layout.addView(text("自动判断会根据条数选择随机间隔，也可以手动覆盖。", 12, MUTED, false), marginBottom(12));
-        Spinner spinner = new Spinner(this);
-        spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
-        spinner.setBackground(round(SOFT, 12, ACCENT, 1));
-        String current = preferences.getString("mode", "auto");
-        int selected = 0;
-        for (int i = 0; i < MODE_VALUES.length; i++) if (MODE_VALUES[i].equals(current)) selected = i;
-        spinner.setSelection(selected);
-        layout.addView(spinner, matchWrap());
-        EditText folder = new EditText(this);
-        folder.setHint("Download 下的文件夹名称");
-        folder.setTextColor(TEXT);
-        folder.setHintTextColor(MUTED);
-        folder.setPadding(dp(14), dp(10), dp(14), dp(10));
-        folder.setBackground(round(SOFT, 12, ACCENT, 1));
-        folder.setText(preferences.getString("folder", "xhs-dl"));
-        layout.addView(folder, marginTop(12));
-        Switch updates = new Switch(this);
-        updates.setText("启动时检测安卓新版本");
-        updates.setTextColor(TEXT);
-        updates.setChecked(preferences.getBoolean("auto_update", true));
-        layout.addView(updates, marginTop(10));
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("采集设置")
-                .setView(layout)
-                .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (ignoredDialog, which) -> {
-                    preferences.edit()
-                            .putString("mode", MODE_VALUES[spinner.getSelectedItemPosition()])
-                            .putString("folder", folder.getText().toString().trim().isEmpty() ? "xhs-dl" : folder.getText().toString().trim())
-                            .putBoolean("auto_update", updates.isChecked())
-                            .apply();
-                    refreshDetection();
-                }).create();
-        presentDialog(dialog);
-    }
-
     private void showHistory() {
         JSONArray items = new HistoryStore(this).read();
         StringBuilder text = new StringBuilder();
@@ -425,10 +376,13 @@ public final class MainActivity extends Activity {
     private void openDownloads() {
         try {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            String selected = preferences.getString("download_tree_uri", "");
+            if (!selected.isEmpty()) intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(selected));
             startActivity(intent);
-            Toast.makeText(this, "文件位于 Download/" + preferences.getString("folder", "xhs-dl"), Toast.LENGTH_LONG).show();
+            String custom = preferences.getString("download_tree_name", "");
+            Toast.makeText(this, custom.isEmpty() ? "文件位于 Download/" + preferences.getString("folder", "红薯下载") : "文件位于 " + custom, Toast.LENGTH_LONG).show();
         } catch (Exception error) {
-            Toast.makeText(this, "请在文件管理中打开 Download/" + preferences.getString("folder", "xhs-dl"), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "请在设置中查看当前下载目录", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -449,7 +403,7 @@ public final class MainActivity extends Activity {
                 if (release == null) continue;
                 String tag = release.optString("tag_name");
                 if (!tag.startsWith("android-v")) continue;
-                if (compareVersion(tag.substring("android-v".length()), "1.0.0") > 0) {
+                if (compareVersion(tag.substring("android-v".length()), BuildConfig.VERSION_NAME) > 0) {
                     String page = release.optString("html_url");
                     handler.post(() -> {
                         AlertDialog dialog = new AlertDialog.Builder(this).setTitle("发现安卓新版本 " + tag)

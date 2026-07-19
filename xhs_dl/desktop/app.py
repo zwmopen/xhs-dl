@@ -122,6 +122,20 @@ class SettingsDialog(ctk.CTkToplevel):
         self.update_switch = ctk.CTkSwitch(options, text="启动时自动检测新版本", font=("Microsoft YaHei UI", 12), text_color=p["text"], progress_color=p["accent"])
         self.update_switch.grid(row=2, column=0, sticky="w", pady=(18, 8))
         self.update_switch.select() if settings.get("auto_update", True) else self.update_switch.deselect()
+        tools = ctk.CTkFrame(options, fg_color="transparent")
+        tools.grid(row=3, column=0, sticky="ew", pady=(10, 0))
+        tools.grid_columnconfigure(0, weight=1)
+        tools.grid_columnconfigure(1, weight=1)
+        ctk.CTkButton(
+            tools, text="使用说明", height=42, corner_radius=12,
+            fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"],
+            command=master.show_help,
+        ).grid(row=0, column=0, sticky="ew", padx=(0, 5))
+        ctk.CTkButton(
+            tools, text="检测更新", height=42, corner_radius=12,
+            fg_color=p["accent"], hover_color=p["accent_hover"], text_color="#FFFFFF",
+            command=master.check_update_manual,
+        ).grid(row=0, column=1, sticky="ew", padx=(5, 0))
 
         self.save_button = ctk.CTkButton(
             self, text="保存设置", height=50, corner_radius=13,
@@ -171,7 +185,7 @@ class DesktopApp(ctk.CTk):
         self.running = False
         self._placeholder = True
         self._clipboard_text = ""
-        self.title("小红书无水印下载器")
+        self.title("红薯下载")
         window_width = min(1080, max(900, screen_width - 40))
         window_height = min(700, max(620, screen_height - 80))
         self.geometry(f"{window_width}x{window_height}")
@@ -198,7 +212,7 @@ class DesktopApp(ctk.CTk):
         header.grid_columnconfigure(0, weight=1)
         brand = ctk.CTkFrame(header, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="小红书原图", font=("STSong", 30, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(brand, text="红薯下载", font=("STSong", 30, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
         ctk.CTkLabel(brand, text="公开笔记 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
         next_theme = "克制玻璃" if self.theme == "neo" else "拟态悬浮"
         self.theme_button = ctk.CTkButton(header, text=next_theme, width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.switch_theme)
@@ -270,6 +284,18 @@ class DesktopApp(ctk.CTk):
     def open_settings(self):
         if not self.running:
             SettingsDialog(self)
+
+    def show_help(self):
+        messagebox.showinfo(
+            "红薯下载 · 使用说明",
+            "1. 粘贴一条或多条小红书分享内容。\n"
+            "2. 点击“开始采集”；识别到剪贴板链接时也可点“粘贴并采集”。\n"
+            "3. 下载目录可在设置中随时更改，默认是系统下载文件夹。\n\n"
+            "软件只处理你有权保存的公开内容，不需要登录。批量任务会自动放慢速度。"
+        )
+
+    def check_update_manual(self):
+        threading.Thread(target=self._check_update, kwargs={"manual": True}, daemon=True).start()
 
     def switch_theme(self):
         if self.running:
@@ -409,7 +435,7 @@ class DesktopApp(ctk.CTk):
         self.result_box.insert("1.0", text)
         self.result_box.configure(state="disabled")
 
-    def _check_update(self):
+    def _check_update(self, manual=False):
         try:
             response = requests.get(RELEASE_API, timeout=5, headers={"User-Agent": "xhs-dl-desktop"})
             response.raise_for_status()
@@ -418,8 +444,14 @@ class DesktopApp(ctk.CTk):
             if latest and version_tuple(latest) > version_tuple(__version__):
                 url = data.get("html_url", "https://github.com/zwmopen/xhs-dl/releases/latest")
                 self.after(0, lambda: self._show_update(latest, url))
-        except Exception:
-            pass
+                if manual:
+                    self.after(0, lambda: messagebox.showinfo("发现新版本", f"发现 {latest}，点击主界面顶部的版本提示即可打开下载页。"))
+            elif manual:
+                self.after(0, lambda: messagebox.showinfo("已是最新版", f"当前版本 V{__version__} 已是最新版。"))
+        except Exception as exc:
+            if manual:
+                error = str(exc)
+                self.after(0, lambda: messagebox.showwarning("暂时无法检测", f"请稍后重试。\n{error}"))
 
     def _show_update(self, version, url):
         self.update_button.configure(text=f"发现 {version}", width=104, command=lambda: webbrowser.open(url))
