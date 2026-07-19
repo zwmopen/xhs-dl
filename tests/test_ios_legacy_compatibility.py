@@ -12,6 +12,7 @@ def test_ios_project_targets_iphone_6_and_builds_only_legacy_client():
     assert 'iOS: "12.0"' in project
     assert "path: RedSweetPotatoDownloadLegacy" in project
     assert "path: RedSweetPotatoDownload/Assets.xcassets" in project
+    assert "buildPhase: resources" in project
 
 
 def test_legacy_client_avoids_apis_unavailable_on_ios_12():
@@ -55,3 +56,4 @@ def test_ci_rejects_an_ipa_that_drops_iphone_6_support():
     )
 
     assert 'info["MinimumOSVersion"] == "12.0"' in workflow
+    assert "index.html" in workflow

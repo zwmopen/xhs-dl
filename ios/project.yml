@@ -15,9 +15,9 @@ targets:
       - path: RedSweetPotatoDownloadLegacy
         excludes:
           - Resources
-      - path: RedSweetPotatoDownload/Assets.xcassets
-    resources:
       - path: RedSweetPotatoDownloadLegacy/Resources
+        buildPhase: resources
+      - path: RedSweetPotatoDownload/Assets.xcassets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zwmopen.redsweetpotatodownload

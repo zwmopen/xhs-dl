@@ -59,6 +59,7 @@ jobs:
           with zipfile.ZipFile(ipa) as archive:
               names = archive.namelist()
               assert "Payload/RedSweetPotatoDownload.app/RedSweetPotatoDownload" in names
+              assert "Payload/RedSweetPotatoDownload.app/index.html" in names
               assert all(name.isascii() for name in names), "IPA contains non-ASCII paths"
               info = plistlib.loads(archive.read("Payload/RedSweetPotatoDownload.app/Info.plist"))
               assert info["CFBundleExecutable"] == "RedSweetPotatoDownload"
