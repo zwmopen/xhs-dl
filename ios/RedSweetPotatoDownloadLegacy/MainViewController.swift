@@ -225,14 +225,17 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
         guard !automationStarted else { return }
         automationStarted = true
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--xhs-test-settings") {
+        let environment = ProcessInfo.processInfo.environment
+        if arguments.contains("--xhs-test-settings") || environment["XHS_TEST_SETTINGS"] == "1" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 self.webView.evaluateJavaScript("showSettings();", completionHandler: nil)
             }
             return
         }
-        guard let argument = arguments.first(where: { $0.hasPrefix("--xhs-test-url=") }) else { return }
-        let raw = String(argument.dropFirst("--xhs-test-url=".count))
+        let argumentURL = arguments.first(where: { $0.hasPrefix("--xhs-test-url=") }).map {
+            String($0.dropFirst("--xhs-test-url=".count))
+        }
+        guard let raw = environment["XHS_TEST_URL"] ?? argumentURL else { return }
         guard let decoded = raw.removingPercentEncoding, !decoded.isEmpty else { return }
         automationResultRequested = true
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

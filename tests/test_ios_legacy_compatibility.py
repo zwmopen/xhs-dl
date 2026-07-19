@@ -64,4 +64,6 @@ def test_legacy_client_has_cabled_real_device_diagnostics():
 
     assert "--xhs-test-settings" in controller
     assert "--xhs-test-url=" in controller
+    assert "XHS_TEST_SETTINGS" in controller
+    assert "XHS_TEST_URL" in controller
     assert "automation-result.json" in controller
