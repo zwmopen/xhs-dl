@@ -5,6 +5,8 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
     private var webView: WKWebView!
     private var running = false
     private var resultLines: [String] = []
+    private var automationStarted = false
+    private var automationResultRequested = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,6 +39,7 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         emit("folder", payload: ["name": DownloadStore.shared.currentFolderName])
         emit("version", payload: ["value": versionText])
+        runCabledDiagnosticsIfRequested()
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -92,6 +95,9 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
                 "progress": 1,
                 "results": resultLines
             ])
+            if automationResultRequested {
+                writeAutomationResult(success: success, failed: failed, total: targets.count)
+            }
             return
         }
 
@@ -213,6 +219,40 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
     private var versionText: String {
         let value = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
         return "iOS V\(value)"
+    }
+
+    private func runCabledDiagnosticsIfRequested() {
+        guard !automationStarted else { return }
+        automationStarted = true
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--xhs-test-settings") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.webView.evaluateJavaScript("showSettings();", completionHandler: nil)
+            }
+            return
+        }
+        guard let argument = arguments.first(where: { $0.hasPrefix("--xhs-test-url=") }) else { return }
+        let raw = String(argument.dropFirst("--xhs-test-url=".count))
+        guard let decoded = raw.removingPercentEncoding, !decoded.isEmpty else { return }
+        automationResultRequested = true
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.removeItem(at: documents.appendingPathComponent("automation-result.json"))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.emit("input", payload: ["text": decoded])
+            self.beginCollection(decoded)
+        }
+    }
+
+    private func writeAutomationResult(success: Int, failed: Int, total: Int) {
+        let payload: [String: Any] = [
+            "success": success,
+            "failed": failed,
+            "total": total,
+            "completed": true
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: .prettyPrinted) else { return }
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try? data.write(to: documents.appendingPathComponent("automation-result.json"), options: .atomic)
     }
 
     private func emit(_ name: String, payload: [String: Any]) {

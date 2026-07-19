@@ -57,3 +57,11 @@ def test_ci_rejects_an_ipa_that_drops_iphone_6_support():
 
     assert 'info["MinimumOSVersion"] == "12.0"' in workflow
     assert "index.html" in workflow
+
+
+def test_legacy_client_has_cabled_real_device_diagnostics():
+    controller = (LEGACY / "MainViewController.swift").read_text(encoding="utf-8")
+
+    assert "--xhs-test-settings" in controller
+    assert "--xhs-test-url=" in controller
+    assert "automation-result.json" in controller
