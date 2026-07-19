@@ -63,6 +63,7 @@ jobs:
               info = plistlib.loads(archive.read("Payload/RedSweetPotatoDownload.app/Info.plist"))
               assert info["CFBundleExecutable"] == "RedSweetPotatoDownload"
               assert info["CFBundleDisplayName"] == "红薯下载"
+              assert info["CFBundleIdentifier"] == "com.zwmopen.redsweetpotatodownload"
               assert info["CFBundleShortVersionString"] == "0.1.0"
           print("IPA structure verified")
           PY
