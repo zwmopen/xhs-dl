@@ -1,4 +1,4 @@
-name: iOS source build
+name: iOS build and unsigned IPA
 
 on:
   workflow_dispatch:
@@ -27,3 +27,50 @@ jobs:
           -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO
           build
+      - name: Build unsigned iPhone app
+        working-directory: ios
+        run: >-
+          xcodebuild
+          -project RedSweetPotatoDownload.xcodeproj
+          -scheme RedSweetPotatoDownload
+          -configuration Release
+          -sdk iphoneos
+          -derivedDataPath build
+          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_REQUIRED=NO
+          CODE_SIGN_IDENTITY=""
+          build
+      - name: Package and verify unsigned IPA
+        working-directory: ios
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path="build/Build/Products/Release-iphoneos/RedSweetPotatoDownload.app"
+          test -d "$app_path"
+          rm -rf package
+          mkdir -p package/Payload
+          ditto "$app_path" "package/Payload/RedSweetPotatoDownload.app"
+          (cd package && /usr/bin/zip -qry ../red-sweet-potato-download-ios-v0.1.0-altstore.ipa Payload)
+          python3 - <<'PY'
+          import plistlib
+          import zipfile
+
+          ipa = "red-sweet-potato-download-ios-v0.1.0-altstore.ipa"
+          with zipfile.ZipFile(ipa) as archive:
+              names = archive.namelist()
+              assert "Payload/RedSweetPotatoDownload.app/RedSweetPotatoDownload" in names
+              assert all(name.isascii() for name in names), "IPA contains non-ASCII paths"
+              info = plistlib.loads(archive.read("Payload/RedSweetPotatoDownload.app/Info.plist"))
+              assert info["CFBundleExecutable"] == "RedSweetPotatoDownload"
+              assert info["CFBundleDisplayName"] == "红薯下载"
+              assert info["CFBundleShortVersionString"] == "0.1.0"
+          print("IPA structure verified")
+          PY
+          shasum -a 256 red-sweet-potato-download-ios-v0.1.0-altstore.ipa > red-sweet-potato-download-ios-v0.1.0-altstore.ipa.sha256
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: red-sweet-potato-download-ios-v0.1.0-altstore
+          path: |
+            ios/red-sweet-potato-download-ios-v0.1.0-altstore.ipa
+            ios/red-sweet-potato-download-ios-v0.1.0-altstore.ipa.sha256

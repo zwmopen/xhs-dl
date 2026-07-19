@@ -16,7 +16,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zwmopen.redsweetpotatodownload
-        PRODUCT_NAME: 红薯下载
+        PRODUCT_NAME: RedSweetPotatoDownload
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1
         INFOPLIST_FILE: RedSweetPotatoDownload/Info.plist

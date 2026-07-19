@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-iOS V0.1.0 源码预览版。已完成 SwiftUI 界面、公开笔记解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。代码已在 GitHub 的 macOS 15 / Xcode 16.4 构建机完成无签名 iPhone Simulator 编译。当前 Windows 开发机仍无法签名 IPA 或安装到 iPhone，因此不把模拟器编译冒充为真机通过。
+iOS V0.1.0。已完成 SwiftUI 界面、公开笔记解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。GitHub 的 macOS 15 / Xcode 16.4 构建机同时执行 iPhone Simulator 编译和未预签名 IPA 打包，IPA 内部 App 与可执行文件保持 ASCII，中文只作为手机显示名。Windows 可使用本机 Sideloadly 与已连接 iPhone 完成签名、安装和真机验收。
 
 ## 在 Mac 上构建
 
