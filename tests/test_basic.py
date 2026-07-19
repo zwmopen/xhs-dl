@@ -144,6 +144,9 @@ def test_web_job_api():
         page = urlopen(root + "/", timeout=5).read().decode("utf-8")
         assert 'data-theme="neo"' in page
         assert "xhs-dl-theme" in page
+        assert json.dumps(str(Path.home() / "Downloads"), ensure_ascii=False) in page
+        assert "MIN_PROGRESS_MS=1100" in page
+        assert '<details class="advanced">' in page
 
         payload = json.dumps({
             "text": "http://xhslink.com/o/testcode",

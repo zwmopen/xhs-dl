@@ -7,6 +7,7 @@ import time
 import uuid
 import webbrowser
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
 from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
@@ -14,6 +15,7 @@ from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
 
 JOBS = {}
 JOBS_LOCK = threading.Lock()
+DEFAULT_OUTPUT_DIR = str(Path.home() / "Downloads")
 
 
 TEMPLATE = r"""<!DOCTYPE html>
@@ -70,7 +72,10 @@ textarea{min-height:218px;padding:17px;resize:vertical;line-height:1.72}
 input,select{height:46px;padding:0 13px}
 textarea:focus,input:focus,select:focus{border-color:#6f9ab8;box-shadow:var(--shadow-inset),0 0 0 3px rgba(75,129,168,.15)}
 textarea::placeholder,input::placeholder{color:#8092a2}
-.settings{display:grid;grid-template-columns:1fr 160px;gap:14px;margin-top:18px}
+.advanced{margin-top:15px;border:1px solid var(--line);border-radius:14px;background:var(--soft);overflow:hidden}
+.advanced summary{padding:12px 14px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;list-style:none;user-select:none}
+.advanced summary::-webkit-details-marker{display:none}.advanced summary:after{content:"＋";float:right;font-size:15px;line-height:1}.advanced[open] summary:after{content:"－"}
+.settings{display:grid;grid-template-columns:1fr 160px;gap:14px;padding:2px 14px 14px}
 .primary{width:100%;height:52px;margin-top:20px;border:0;border-radius:16px;background:var(--primary);color:#f7fafc;font-size:15px;font-weight:800;letter-spacing:.04em;cursor:pointer;box-shadow:0 10px 22px rgba(38,52,66,.2);transition:background var(--ease),transform var(--ease),box-shadow var(--ease)}
 .primary:hover{background:var(--primary-hover);transform:translateY(-1px);box-shadow:0 12px 26px rgba(38,52,66,.25)}
 .primary:active{transform:translateY(1px);box-shadow:0 5px 12px rgba(38,52,66,.22)}
@@ -85,7 +90,8 @@ textarea::placeholder,input::placeholder{color:#8092a2}
 .state-dot.error{background:var(--bad);box-shadow:0 0 0 6px rgba(169,80,85,.12)}
 .status-title{font-size:17px;font-weight:800;margin:0}.status-sub{font-size:12px;color:var(--muted);margin:6px 0 0}
 .progress-wrap{margin:24px 0 18px}.progress-track{height:9px;border-radius:999px;background:var(--soft);box-shadow:var(--shadow-inset);overflow:hidden}
-.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#426f8d,#6b91aa);border-radius:inherit;transition:width 360ms ease}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#426f8d,#6b91aa);border-radius:inherit;transition:width 520ms ease}
+.progress-bar.active{width:38%;animation:travel 1.1s ease-in-out infinite}
 .progress-meta{display:flex;justify-content:space-between;margin-top:9px;color:var(--muted);font-size:12px}
 .empty{margin:auto 0;text-align:center;color:var(--muted);padding:34px 16px}
 .empty-symbol{width:72px;height:72px;border-radius:24px;margin:0 auto 18px;display:grid;place-items:center;background:var(--panel);box-shadow:var(--shadow-small);font-family:Georgia,serif;font-size:28px;color:#6d8192}
@@ -98,6 +104,7 @@ textarea::placeholder,input::placeholder{color:#8092a2}
 .footnote{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-height:1.7}
 button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(47,111,159,.32);outline-offset:3px}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(71,123,157,.13)}50%{box-shadow:0 0 0 10px rgba(71,123,157,.04)}}
+@keyframes travel{0%{transform:translateX(-110%)}50%{transform:translateX(80%)}100%{transform:translateX(280%)}}
 @media(max-width:760px){body{padding:18px 14px}.workspace{grid-template-columns:1fr}.surface{padding:20px;border-radius:22px}.settings{grid-template-columns:1fr}.topbar{align-items:flex-start}.brand p{max-width:210px}.status-card{min-height:330px}h2{font-size:25px}}
 @media(max-width:480px){.topbar{gap:10px}.brand{min-width:0;gap:10px}.brand p{display:none}.mark{width:40px;height:40px;border-radius:13px;font-size:18px}.brand h1{font-size:22px;margin:9px 0 0}.theme-switch{padding:9px 11px;font-size:12px}.surface{padding:18px}textarea{min-height:190px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -113,15 +120,15 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
   <section class="workspace">
     <div class="surface">
       <div class="eyebrow">Original media</div>
-      <h2>把分享文本放进来，<br>剩下的交给本地引擎。</h2>
-      <p class="lead">支持短链接、长链接和整段分享口令。批量任务逐条执行，完成一条就保存一条。</p>
+      <h2>粘贴链接，保存原图。</h2>
+      <p class="lead">复制小红书分享内容到下面，点一次即可。默认保存到电脑的“下载”文件夹。</p>
       <label for="input">分享文本或链接</label>
       <textarea id="input" placeholder="例如：复制小红书分享文本到这里，也可以一次粘贴多条链接。"></textarea>
-      <div class="settings">
-        <div><label for="outdir">保存位置</label><input id="outdir" type="text" placeholder="留空则保存到 ./xhs_downloads"></div>
+      <details class="advanced"><summary>保存位置和速度</summary><div class="settings">
+        <div><label for="outdir">保存位置</label><input id="outdir" type="text"></div>
         <div><label for="mode">下载节奏</label><select id="mode"><option value="fast">快速 · 3–8 秒</option><option value="normal">标准 · 8–15 秒</option><option value="cautious" selected>保守 · 25–45 秒</option><option value="slow">慢速 · 55–85 秒</option><option value="very-slow">极慢 · 110–160 秒</option></select></div>
-      </div>
-      <button class="primary" id="go" type="button">开始提取原始媒体</button>
+      </div></details>
+      <button class="primary" id="go" type="button">开始下载</button>
       <div class="privacy"><span class="shield">✓</span><span>公开笔记无需账号、密码或 Cookie。链接默认只交给本机引擎，不会静默发送到在线解析网站。</span></div>
     </div>
     <aside class="surface status-card" aria-live="polite">
@@ -131,22 +138,23 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
       <div class="results" id="results"></div>
     </aside>
   </section>
-  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · xhs-dl V2.2</p>
+  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · xhs-dl V2.2.1</p>
 </main>
 <script>
-const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode';
-const $=id=>document.getElementById(id);let activeJob=null,pollTimer=null;
+const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode',DEFAULT_OUTPUT=__DEFAULT_OUTPUT_JSON__,MIN_PROGRESS_MS=1100;
+const $=id=>document.getElementById(id);let activeJob=null,pollTimer=null,jobStartedAt=0;
 function applyTheme(theme){const next=theme==='glass'?'glass':'neo';document.body.dataset.theme=next;localStorage.setItem(THEME_KEY,next);$('themeButton').textContent=next==='neo'?'克制玻璃':'拟态悬浮'}
 applyTheme(localStorage.getItem(THEME_KEY)||'neo');
 $('themeButton').addEventListener('click',()=>applyTheme(document.body.dataset.theme==='neo'?'glass':'neo'));
-$('outdir').value=localStorage.getItem(OUTPUT_KEY)||'';$('mode').value=localStorage.getItem(MODE_KEY)||'cautious';
+$('outdir').value=localStorage.getItem(OUTPUT_KEY)||DEFAULT_OUTPUT;$('mode').value=localStorage.getItem(MODE_KEY)||'cautious';
 $('outdir').addEventListener('change',e=>localStorage.setItem(OUTPUT_KEY,e.target.value.trim()));$('mode').addEventListener('change',e=>localStorage.setItem(MODE_KEY,e.target.value));
 function setState(status,title,sub){$('stateDot').className='state-dot '+status;$('statusTitle').textContent=title;$('statusSub').textContent=sub}
-function render(job){const total=job.total||0,done=job.done||0,success=job.success||0;$('progressBar').style.width=(total?Math.round(done/total*100):0)+'%';$('progressText').textContent=`${done} / ${total}`;$('successText').textContent=`成功 ${success}`;
+function render(job){const total=job.total||0,done=job.done||0,success=job.success||0,running=job.status==='running'||job.status==='queued';$('progressBar').classList.toggle('active',running&&done===0);if(!(running&&done===0)){$('progressBar').style.transform='none';$('progressBar').style.width=(total?Math.round(done/total*100):0)+'%'}$('progressText').textContent=`${done} / ${total}`;$('successText').textContent=`成功 ${success}`;
   const items=job.items||[];$('empty').style.display=items.length?'none':'block';$('results').classList.toggle('show',items.length>0);$('results').innerHTML='';items.forEach(it=>{const d=document.createElement('div');d.className='result '+(it.success?'ok':'fail');const top=document.createElement('div');top.className='result-top';const name=document.createElement('span');name.className='result-name';name.textContent=it.title||it.error||'未命名笔记';const count=document.createElement('span');count.className='result-count';count.textContent=it.success?`${it.image_success||0} 张`:'失败';top.append(name,count);d.append(top);if(!it.success&&it.error){const err=document.createElement('div');err.className='result-error';err.textContent=it.error;d.append(err)}$('results').append(d)});
   if(job.status==='running'||job.status==='queued')setState('running','正在逐条提取',total?`已完成 ${done} 条，共 ${total} 条`:'正在准备本地引擎');else if(job.status==='completed')setState(job.failed?'error':'done',job.failed?'任务完成，有失败项':'全部保存完成',`成功 ${job.success||0} 条，失败 ${job.failed||0} 条`);else if(job.status==='error')setState('error','任务没有完成',job.error||'请稍后重试')}
-async function poll(){if(!activeJob)return;try{const r=await fetch('/api/jobs/'+activeJob);const job=await r.json();if(!r.ok)throw new Error(job.error||'读取任务失败');render(job);if(job.status==='completed'||job.status==='error'){activeJob=null;$('go').disabled=false;$('go').textContent='开始提取原始媒体';return}pollTimer=setTimeout(poll,900)}catch(e){setState('error','连接中断',e.message);$('go').disabled=false;$('go').textContent='重新开始';activeJob=null}}
-async function start(){if(activeJob)return;const text=$('input').value.trim();if(!text){$('input').focus();setState('error','还缺少分享文本','请先粘贴至少一条小红书链接');return}const output_dir=$('outdir').value.trim()||'./xhs_downloads',mode=$('mode').value;localStorage.setItem(OUTPUT_KEY,$('outdir').value.trim());localStorage.setItem(MODE_KEY,mode);$('go').disabled=true;$('go').textContent='正在创建任务…';$('results').innerHTML='';$('results').classList.remove('show');$('empty').style.display='block';setState('running','正在准备','本地引擎即将开始');try{const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,output_dir,mode})});const data=await r.json();if(!r.ok)throw new Error(data.error||'创建任务失败');activeJob=data.job_id;$('go').textContent='下载进行中';poll()}catch(e){setState('error','无法开始',e.message);$('go').disabled=false;$('go').textContent='重新开始'}}
+function finish(){activeJob=null;$('go').disabled=false;$('go').textContent='开始下载'}
+async function poll(){if(!activeJob)return;try{const r=await fetch('/api/jobs/'+activeJob);const job=await r.json();if(!r.ok)throw new Error(job.error||'读取任务失败');if(job.status==='completed'||job.status==='error'){const wait=Math.max(0,MIN_PROGRESS_MS-(Date.now()-jobStartedAt));if(wait){pollTimer=setTimeout(()=>{render(job);finish()},wait);return}render(job);finish();return}render(job);pollTimer=setTimeout(poll,700)}catch(e){setState('error','连接中断',e.message);$('progressBar').classList.remove('active');$('go').disabled=false;$('go').textContent='重新开始';activeJob=null}}
+async function start(){if(activeJob)return;const text=$('input').value.trim();if(!text){$('input').focus();setState('error','还缺少分享文本','请先粘贴至少一条小红书链接');return}const output_dir=$('outdir').value.trim()||DEFAULT_OUTPUT,mode=$('mode').value;localStorage.setItem(OUTPUT_KEY,output_dir);localStorage.setItem(MODE_KEY,mode);jobStartedAt=Date.now();$('go').disabled=true;$('go').textContent='正在准备…';$('progressBar').classList.add('active');$('progressBar').style.width='38%';$('progressText').textContent='准备中';$('successText').textContent='';$('results').innerHTML='';$('results').classList.remove('show');$('empty').style.display='block';setState('running','正在准备','连接本地无水印引擎');try{const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,output_dir,mode})});const data=await r.json();if(!r.ok)throw new Error(data.error||'创建任务失败');activeJob=data.job_id;$('go').textContent='下载进行中';poll()}catch(e){$('progressBar').classList.remove('active');setState('error','无法开始',e.message);$('go').disabled=false;$('go').textContent='重新开始'}}
 $('go').addEventListener('click',start);$('input').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')start()});
 </script>
 </body>
@@ -206,7 +214,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path in ("/", "/index.html"):
-            self._html(TEMPLATE)
+            html = TEMPLATE.replace(
+                "__DEFAULT_OUTPUT_JSON__",
+                json.dumps(DEFAULT_OUTPUT_DIR, ensure_ascii=False),
+            )
+            self._html(html)
             return
         if self.path.startswith("/api/jobs/"):
             job_id = self.path.rsplit("/", 1)[-1]
@@ -235,7 +247,7 @@ class Handler(BaseHTTPRequestHandler):
         if not urls:
             self._json({"error": "未检测到有效链接"}, 400)
             return
-        output_dir = body.get("output_dir", "./xhs_downloads")
+        output_dir = body.get("output_dir") or DEFAULT_OUTPUT_DIR
         mode = body.get("mode", "cautious")
         delay = DELAY_MODES.get(mode, DELAY_MODES["cautious"])
         try:
@@ -296,7 +308,7 @@ def main():
     port = 5678
     server = HTTPServer((host, port), Handler)
     url = "http://{}:{}".format(host, port)
-    print("xhs-dl V2.2 Web: {}".format(url))
+    print("xhs-dl V2.2.1 Web: {}".format(url))
     print("Press Ctrl+C to stop")
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
