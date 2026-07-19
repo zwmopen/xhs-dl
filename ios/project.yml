@@ -2,7 +2,7 @@ name: RedSweetPotatoDownload
 options:
   bundleIdPrefix: com.zwmopen
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "12.0"
 settings:
   base:
     SWIFT_VERSION: 5.9
@@ -12,7 +12,12 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: RedSweetPotatoDownload
+      - path: RedSweetPotatoDownloadLegacy
+        excludes:
+          - Resources
+      - path: RedSweetPotatoDownload/Assets.xcassets
+    resources:
+      - path: RedSweetPotatoDownloadLegacy/Resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zwmopen.redsweetpotatodownload

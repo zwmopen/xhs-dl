@@ -65,6 +65,7 @@ jobs:
               assert info["CFBundleDisplayName"] == "红薯下载"
               assert info["CFBundleIdentifier"] == "com.zwmopen.redsweetpotatodownload"
               assert info["CFBundleShortVersionString"] == "0.1.0"
+              assert info["MinimumOSVersion"] == "12.0"
           print("IPA structure verified")
           PY
           shasum -a 256 red-sweet-potato-download-ios-v0.1.0-altstore.ipa > red-sweet-potato-download-ios-v0.1.0-altstore.ipa.sha256

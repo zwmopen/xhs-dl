@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <style>
+    :root { --ink:#13242e; --muted:#657781; --accent:#557f91; --deep:#243a45; --paper:rgba(255,255,255,.72); --line:rgba(255,255,255,.76); }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { margin:0; min-height:100%; color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
+    body { padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px); background:linear-gradient(145deg,#edf1f3 0%,#d8e2e6 56%,#cbd9df 100%); }
+    body.glass { background:linear-gradient(145deg,#e2eef4 0%,#c8dde7 54%,#b8cfda 100%); }
+    .orb { position:fixed; border-radius:50%; filter:blur(2px); opacity:.48; pointer-events:none; }
+    .orb.one { width:180px;height:180px;right:-65px;top:72px;background:rgba(255,255,255,.82); }
+    .orb.two { width:130px;height:130px;left:-54px;bottom:120px;background:rgba(113,157,175,.22); }
+    .app { max-width:680px;margin:auto;position:relative; }
+    header { display:flex;align-items:center;gap:12px;margin:4px 2px 18px; }
+    .mark { width:50px;height:50px;border-radius:17px;background:linear-gradient(145deg,#f9fbfc,#c8d4d9);box-shadow:8px 8px 18px rgba(68,89,99,.18),-7px -7px 18px rgba(255,255,255,.85);display:grid;place-items:center;font-size:25px; }
+    h1 { font-family:Georgia,"Songti SC",serif;font-size:31px;font-weight:500;letter-spacing:.03em;margin:0; }
+    .subtitle { margin-top:3px;color:var(--muted);font-size:12px; }
+    .iconbtn { margin-left:auto;width:44px;height:44px;border:0;border-radius:15px;background:var(--paper);color:var(--deep);font-size:20px;box-shadow:5px 7px 16px rgba(70,91,101,.14); }
+    .card { margin:14px 0;padding:18px;border:1px solid var(--line);border-radius:24px;background:var(--paper);box-shadow:10px 13px 27px rgba(67,89,100,.13),-7px -7px 22px rgba(255,255,255,.62);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px); }
+    .eyebrow { color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase; }
+    .row { display:flex;align-items:center;gap:10px; }
+    .row.between { justify-content:space-between; }
+    h2 { font-size:19px;margin:6px 0 5px; }
+    p { color:var(--muted);font-size:13px;line-height:1.65;margin:4px 0; }
+    textarea { width:100%;min-height:146px;margin:13px 0 10px;padding:15px;border:1px solid rgba(81,113,126,.16);border-radius:17px;resize:none;background:rgba(255,255,255,.43);font:14px/1.6 -apple-system;color:var(--ink);outline:none; }
+    .detected { color:var(--accent);font-size:12px;font-weight:650; }
+    button { font:600 14px -apple-system;cursor:pointer; }
+    .button { min-height:48px;border:0;border-radius:16px;padding:0 16px;background:#edf2f4;color:var(--deep);box-shadow:4px 6px 13px rgba(69,90,100,.13); }
+    .primary { width:100%;height:55px;color:white;background:linear-gradient(135deg,#314b58,#172c36);box-shadow:0 10px 22px rgba(31,53,64,.24); }
+    .soft { background:rgba(255,255,255,.55); }
+    .button:disabled { opacity:.48; }
+    .actions { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px; }
+    .progress { height:8px;background:rgba(65,91,103,.11);border-radius:8px;overflow:hidden;margin:14px 0 8px; }
+    .bar { width:0;height:100%;background:linear-gradient(90deg,#698fa0,#345b6d);transition:width .28s ease; }
+    .results { font-size:12px;line-height:1.7;color:#405762;white-space:pre-wrap; }
+    footer { text-align:center;color:var(--muted);font-size:11px;padding:12px 0; }
+    .sheet { position:fixed;z-index:20;inset:0;background:rgba(22,35,42,.24);display:none;align-items:flex-end; }
+    .sheet.show { display:flex; }
+    .panel { width:100%;max-height:91vh;overflow:auto;padding:18px 18px calc(env(safe-area-inset-bottom) + 25px);border-radius:28px 28px 0 0;background:linear-gradient(150deg,#edf2f4,#d6e1e5);box-shadow:0 -18px 50px rgba(32,48,57,.22); }
+    .grab { width:42px;height:5px;border-radius:5px;background:#aab9c0;margin:0 auto 14px; }
+    .section { padding:16px;border-radius:20px;background:rgba(255,255,255,.57);margin:12px 0;border:1px solid rgba(255,255,255,.8); }
+    .section h3 { margin:0 0 5px;font-size:16px; }
+    .stack { display:grid;gap:9px;margin-top:12px; }
+    .folder { font-size:13px;font-weight:650;color:#355360;padding:11px;border-radius:12px;background:rgba(225,235,239,.8);word-break:break-all; }
+    .seg { display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;background:rgba(96,123,135,.12);border-radius:14px; }
+    .seg button { border:0;border-radius:10px;padding:10px;background:transparent;color:var(--muted); }
+    .seg button.active { background:white;color:var(--deep);box-shadow:0 4px 10px rgba(58,82,93,.12); }
+    .guide { padding:12px 0;border-top:1px solid rgba(76,101,112,.10); }
+    .guide b { display:block;font-size:13px;margin-bottom:3px; }
+    .update { font-size:12px;color:var(--accent);min-height:18px; }
+    @media (max-width:350px) { body{padding-left:12px;padding-right:12px} h1{font-size:27px}.card{padding:15px}.actions{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="orb one"></div><div class="orb two"></div>
+  <main class="app">
+    <header>
+      <div class="mark">薯</div>
+      <div><h1>红薯下载</h1><div class="subtitle">公开笔记 · 原始媒体直存 · 无需登录</div></div>
+      <button class="iconbtn" onclick="showSettings()" aria-label="设置">⚙︎</button>
+    </header>
+
+    <section class="card">
+      <div class="row between"><div class="eyebrow">粘贴分享内容</div><span class="detected" id="detected">等待链接</span></div>
+      <textarea id="input" placeholder="把小红书分享文字或链接粘贴到这里……" oninput="detect()"></textarea>
+      <div class="actions">
+        <button class="button soft" onclick="send('paste')">只粘贴</button>
+        <button class="button" onclick="send('pasteAndCollect')">粘贴并采集</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">采集状态</div>
+      <h2 id="statusTitle">等待开始</h2>
+      <p id="statusDetail">粘贴后自动识别条数并建议安全频率。</p>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="results" id="results"></div>
+    </section>
+
+    <button id="collect" class="button primary" onclick="collect()" disabled>开始采集</button>
+    <footer><span id="version">iOS</span> · 支持 iPhone 6 / iOS 12.5.8 起 · 数据只留本机</footer>
+  </main>
+
+  <div class="sheet" id="settings" onclick="backdrop(event)">
+    <div class="panel">
+      <div class="grab"></div>
+      <div class="row between"><div><div class="eyebrow">Settings</div><h2>设置与帮助</h2></div><button class="iconbtn" onclick="hideSettings()">×</button></div>
+
+      <div class="section">
+        <h3>保存的速度和位置</h3>
+        <p>默认保存到“文件/红薯下载”。也可以选择 iCloud Drive 或“我的 iPhone”中的目录。</p>
+        <div class="folder" id="folder">文件/红薯下载</div>
+        <div class="stack">
+          <button class="button" onclick="send('chooseFolder')">选择下载目录</button>
+          <button class="button soft" onclick="send('resetFolder')">恢复默认目录</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>视觉主题</h3><p>所有页面统一使用你偏好的拟态悬浮与克制玻璃语言。</p>
+        <div class="seg"><button id="neo" onclick="theme('neo')">拟态悬浮</button><button id="glass" onclick="theme('glass')">克制玻璃</button></div>
+      </div>
+
+      <div class="section">
+        <h3>检测更新</h3><p>只检查官方 GitHub 发布页，不会静默安装。</p>
+        <button class="button" onclick="send('checkUpdate')">检测更新</button>
+        <div class="update" id="update"></div>
+      </div>
+
+      <div class="section">
+        <h3>使用说明</h3>
+        <div class="guide"><b>1 · 粘贴</b><p>复制公开笔记链接，点“粘贴并采集”；也可以手动粘贴后点“开始采集”。</p></div>
+        <div class="guide"><b>2 · 安全频率</b><p>单条直接执行；批量任务会按数量自动采用随机等待，也可以分批运行。</p></div>
+        <div class="guide"><b>3 · 保存内容</b><p>每条笔记文件夹只放媒体与“文案.txt”；标题、正文和话题都在文案中。</p></div>
+        <div class="guide"><b>4 · 历史数据</b><p>统一 history.json 放在 App 内部，不散落到每条笔记目录，也不做云同步。</p></div>
+        <div class="guide"><b>安全边界</b><p>仅处理你有权保存的公开内容；不绕过隐私、删除、年龄、地区或登录限制。</p></div>
+        <button class="button soft" onclick="send('openProject')">项目与版本记录</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function send(action, extra) {
+      var payload = extra || {}; payload.action = action;
+      window.webkit.messageHandlers.bridge.postMessage(payload);
+    }
+    function links(text) {
+      var found = text.match(/https?:\/\/[^\s]+/g) || [], seen = {}, out = [];
+      found.forEach(function(x){ x=x.replace(/[，。；、）)】]+$/g,''); if(!seen[x]){seen[x]=1;out.push(x);} }); return out;
+    }
+    function detect() {
+      var count=links(document.getElementById('input').value).length;
+      document.getElementById('detected').textContent=count ? '识别到 '+count+' 条' : '等待链接';
+      document.getElementById('collect').disabled=!count;
+      if(count){ document.getElementById('statusTitle').textContent='已识别 '+count+' 条'; document.getElementById('statusDetail').textContent=count===1?'单条直接采集':(count<=20?'稳妥模式 · 随机 35–55 秒':'自动切换慢速模式'); }
+    }
+    function collect(){ send('collect',{text:document.getElementById('input').value}); }
+    function showSettings(){document.getElementById('settings').className='sheet show';}
+    function hideSettings(){document.getElementById('settings').className='sheet';}
+    function backdrop(e){if(e.target.id==='settings')hideSettings();}
+    function theme(name){ document.body.className=name==='glass'?'glass':''; localStorage.theme=name; document.getElementById('neo').className=name==='neo'?'active':'';document.getElementById('glass').className=name==='glass'?'active':''; }
+    window.nativeEvent=function(name,p){
+      if(name==='input'){document.getElementById('input').value=p.text||'';detect();}
+      if(name==='folder'){document.getElementById('folder').textContent=p.name;}
+      if(name==='version'){document.getElementById('version').textContent=p.value;}
+      if(name==='running'){document.getElementById('collect').disabled=!!p.value;document.getElementById('collect').textContent=p.value?'采集中…':'开始采集';}
+      if(name==='status'){document.getElementById('statusTitle').textContent=p.title||'';document.getElementById('statusDetail').textContent=p.detail||'';document.getElementById('bar').style.width=((p.progress||0)*100)+'%';document.getElementById('results').textContent=(p.results||[]).join('\n');}
+      if(name==='update'){document.getElementById('update').textContent=p.message||'';}
+    };
+    theme(localStorage.theme||'neo'); detect();
+  </script>
+</body>
+</html>
