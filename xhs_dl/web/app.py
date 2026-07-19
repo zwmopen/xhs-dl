@@ -138,7 +138,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
       <div class="results" id="results"></div>
     </aside>
   </section>
-  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · xhs-dl V2.3.0</p>
+  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · xhs-dl V2.3.1</p>
 </main>
 <script>
 const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode',DEFAULT_OUTPUT=__DEFAULT_OUTPUT_JSON__,MIN_PROGRESS_MS=1100;
@@ -308,7 +308,7 @@ def main():
     port = 5678
     server = HTTPServer((host, port), Handler)
     url = "http://{}:{}".format(host, port)
-    print("xhs-dl V2.3.0 Web: {}".format(url))
+    print("xhs-dl V2.3.1 Web: {}".format(url))
     print("Press Ctrl+C to stop")
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:

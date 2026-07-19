@@ -65,6 +65,7 @@ def load_settings():
         "output_dir": str(Path.home() / "Downloads"),
         "mode": "auto",
         "auto_update": True,
+        "theme": "neo",
     }
     with _LOCK:
         value = _read_json(settings_path(), {})
@@ -78,6 +79,7 @@ def save_settings(value):
         "output_dir": value.get("output_dir") or str(Path.home() / "Downloads"),
         "mode": value.get("mode", "auto"),
         "auto_update": bool(value.get("auto_update", True)),
+        "theme": "glass" if value.get("theme") == "glass" else "neo",
     }
     with _LOCK:
         _write_json(settings_path(), allowed)

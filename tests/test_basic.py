@@ -209,6 +209,17 @@ def test_portable_and_update_versions():
         with patch.dict(os.environ, {}, clear=False):
             assert configure_engine_home(executable) == engine.resolve()
 
+
+def test_desktop_theme_setting_is_persistent_and_validated():
+    from xhs_dl.storage import load_settings, save_settings
+
+    with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"LOCALAPPDATA": temp}):
+        assert load_settings()["theme"] == "neo"
+        save_settings({"output_dir": temp, "mode": "auto", "theme": "glass"})
+        assert load_settings()["theme"] == "glass"
+        save_settings({"output_dir": temp, "mode": "auto", "theme": "unknown"})
+        assert load_settings()["theme"] == "neo"
+
 if __name__ == "__main__":
     test_extract_urls()
     test_extract_long_urls()

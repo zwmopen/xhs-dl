@@ -24,6 +24,22 @@ MODE_LABELS = {
     "慢速（55–85 秒）": "slow",
     "极慢（110–160 秒）": "very-slow",
 }
+THEME_PALETTES = {
+    "neo": {
+        "bg": "#E8EDF2", "surface": "#F7F9FA", "input": "#EEF3F6",
+        "status": "#E9EFF3", "line": "#D1DBE3", "text": "#182633",
+        "muted": "#6C7F8F", "primary": "#203442", "primary_hover": "#142631",
+        "secondary": "#DCE5EB", "secondary_hover": "#CDD9E1",
+        "accent": "#527A93", "accent_hover": "#3F687F",
+    },
+    "glass": {
+        "bg": "#DFEAF2", "surface": "#EDF4F8", "input": "#F5FAFD",
+        "status": "#DCEAF4", "line": "#C4D7E4", "text": "#102B45",
+        "muted": "#617A91", "primary": "#2F6F9F", "primary_hover": "#245C86",
+        "secondary": "#D6E7F8", "secondary_hover": "#C5DAEB",
+        "accent": "#4B86AC", "accent_hover": "#397395",
+    },
+}
 
 
 def automatic_mode(count):
@@ -58,45 +74,69 @@ class SettingsDialog(ctk.CTkToplevel):
         super().__init__(master)
         self.master_app = master
         self.title("下载设置")
-        self.geometry("620x360")
-        self.resizable(False, False)
+        self.geometry("680x560")
+        self.minsize(600, 500)
+        self.resizable(True, True)
         self.transient(master)
         self.grab_set()
-        self.configure(fg_color="#E8EDF2")
+        p = master.palette
+        self.configure(fg_color=p["bg"])
 
         settings = master.settings
         self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
         ctk.CTkLabel(
             self, text="下载设置", font=("Microsoft YaHei UI", 25, "bold"),
-            text_color="#182634",
+            text_color=p["text"],
         ).grid(row=0, column=0, sticky="w", padx=34, pady=(30, 5))
         ctk.CTkLabel(
             self, text="设置会保存在本机，下次打开自动沿用。",
-            font=("Microsoft YaHei UI", 12), text_color="#66798B",
+            font=("Microsoft YaHei UI", 12), text_color=p["muted"],
         ).grid(row=1, column=0, sticky="w", padx=34, pady=(0, 24))
 
-        folder_frame = ctk.CTkFrame(self, fg_color="transparent")
-        folder_frame.grid(row=2, column=0, sticky="ew", padx=34)
-        folder_frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(folder_frame, text="保存位置", font=("Microsoft YaHei UI", 13, "bold"), text_color="#273746").grid(row=0, column=0, sticky="w", pady=(0, 8))
-        self.folder_entry = ctk.CTkEntry(folder_frame, height=44, corner_radius=12, border_width=1, border_color="#C7D2DC", fg_color="#F5F8FA", text_color="#243443")
-        self.folder_entry.grid(row=1, column=0, sticky="ew", padx=(0, 10))
-        self.folder_entry.insert(0, settings["output_dir"])
-        ctk.CTkButton(folder_frame, text="选择文件夹", width=112, height=44, corner_radius=12, fg_color="#334B5F", hover_color="#24394B", command=self.choose_folder).grid(row=1, column=1)
+        content = ctk.CTkScrollableFrame(
+            self, fg_color="transparent", corner_radius=0,
+            scrollbar_button_color=p["secondary"],
+            scrollbar_button_hover_color=p["secondary_hover"],
+        )
+        content.grid(row=2, column=0, sticky="nsew", padx=(26, 18), pady=(0, 88))
+        content.grid_columnconfigure(0, weight=1)
 
-        options = ctk.CTkFrame(self, fg_color="transparent")
-        options.grid(row=3, column=0, sticky="ew", padx=34, pady=22)
+        folder_frame = ctk.CTkFrame(content, fg_color="transparent")
+        folder_frame.grid(row=0, column=0, sticky="ew", padx=8)
+        folder_frame.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(folder_frame, text="保存位置", font=("Microsoft YaHei UI", 13, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w", pady=(0, 8))
+        self.folder_entry = ctk.CTkEntry(folder_frame, height=46, corner_radius=12, border_width=1, border_color=p["line"], fg_color=p["input"], text_color=p["text"])
+        self.folder_entry.grid(row=1, column=0, sticky="ew")
+        self.folder_entry.insert(0, settings["output_dir"])
+        ctk.CTkButton(folder_frame, text="选择文件夹", height=42, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.choose_folder).grid(row=2, column=0, sticky="ew", pady=(10, 0))
+
+        options = ctk.CTkFrame(content, fg_color="transparent")
+        options.grid(row=1, column=0, sticky="ew", padx=8, pady=(22, 8))
         options.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(options, text="下载速度", font=("Microsoft YaHei UI", 13, "bold"), text_color="#273746").grid(row=0, column=0, sticky="w", pady=(0, 8))
+        ctk.CTkLabel(options, text="下载速度", font=("Microsoft YaHei UI", 13, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w", pady=(0, 8))
         current_label = next((label for label, mode in MODE_LABELS.items() if mode == settings["mode"]), "自动判断（推荐）")
-        self.mode_menu = ctk.CTkOptionMenu(options, values=list(MODE_LABELS), height=42, corner_radius=11, fg_color="#D8E1E9", button_color="#9EB1C1", button_hover_color="#8BA1B3", text_color="#20313F")
+        self.mode_menu = ctk.CTkOptionMenu(options, values=list(MODE_LABELS), height=44, corner_radius=11, fg_color=p["secondary"], button_color=p["accent"], button_hover_color=p["accent_hover"], text_color=p["text"])
         self.mode_menu.set(current_label)
-        self.mode_menu.grid(row=1, column=0, sticky="w")
-        self.update_switch = ctk.CTkSwitch(options, text="启动时自动检测新版本", font=("Microsoft YaHei UI", 12), text_color="#425464", progress_color="#557C95")
-        self.update_switch.grid(row=1, column=1, sticky="e", padx=(30, 0))
+        self.mode_menu.grid(row=1, column=0, sticky="ew")
+        self.update_switch = ctk.CTkSwitch(options, text="启动时自动检测新版本", font=("Microsoft YaHei UI", 12), text_color=p["text"], progress_color=p["accent"])
+        self.update_switch.grid(row=2, column=0, sticky="w", pady=(18, 8))
         self.update_switch.select() if settings.get("auto_update", True) else self.update_switch.deselect()
 
-        ctk.CTkButton(self, text="保存设置", height=46, corner_radius=13, fg_color="#213342", hover_color="#142430", font=("Microsoft YaHei UI", 13, "bold"), command=self.save).grid(row=4, column=0, sticky="ew", padx=34, pady=(0, 28))
+        self.save_button = ctk.CTkButton(
+            self, text="保存设置", height=50, corner_radius=13,
+            fg_color=p["primary"], hover_color=p["primary_hover"],
+            font=("Microsoft YaHei UI", 13, "bold"), command=self.save,
+        )
+        # 固定在可视窗口底部，不让系统 DPI 或内容请求尺寸把主操作裁掉。
+        self.save_button.place(relx=0.5, rely=1.0, anchor="s", relwidth=0.88, y=-24)
+        self.after(100, self._center)
+
+    def _center(self):
+        self.update_idletasks()
+        x = self.master_app.winfo_x() + max(0, (self.master_app.winfo_width() - self.winfo_width()) // 2)
+        y = self.master_app.winfo_y() + max(0, (self.master_app.winfo_height() - self.winfo_height()) // 2)
+        self.geometry(f"+{x}+{y}")
 
     def choose_folder(self):
         selected = filedialog.askdirectory(initialdir=self.folder_entry.get() or str(Path.home()))
@@ -110,6 +150,7 @@ class SettingsDialog(ctk.CTkToplevel):
             "output_dir": folder,
             "mode": MODE_LABELS[self.mode_menu.get()],
             "auto_update": bool(self.update_switch.get()),
+            "theme": self.master_app.theme,
         })
         self.master_app.refresh_folder_label()
         self.destroy()
@@ -125,6 +166,8 @@ class DesktopApp(ctk.CTk):
         if screen_width <= 1280:
             ctk.set_widget_scaling(0.8)
         self.settings = load_settings()
+        self.theme = self.settings.get("theme", "neo")
+        self.palette = THEME_PALETTES[self.theme]
         self.running = False
         self._placeholder = True
         self._clipboard_text = ""
@@ -133,7 +176,7 @@ class DesktopApp(ctk.CTk):
         window_height = min(700, max(620, screen_height - 80))
         self.geometry(f"{window_width}x{window_height}")
         self.minsize(min(900, window_width), min(620, window_height))
-        self.configure(fg_color="#E8EDF2")
+        self.configure(fg_color=self.palette["bg"])
         self._build_ui()
         self.after(250, self._center_window)
         if self.settings.get("auto_update", True):
@@ -147,6 +190,7 @@ class DesktopApp(ctk.CTk):
         self.geometry(f"+{x}+{y}")
 
     def _build_ui(self):
+        p = self.palette
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         header = ctk.CTkFrame(self, fg_color="transparent")
@@ -154,65 +198,68 @@ class DesktopApp(ctk.CTk):
         header.grid_columnconfigure(0, weight=1)
         brand = ctk.CTkFrame(header, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="小红书原图", font=("STSong", 30, "bold"), text_color="#182633").grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="公开笔记 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color="#6C7F8F").grid(row=1, column=0, sticky="w", pady=(4, 0))
-        self.update_button = ctk.CTkButton(header, text="", width=0, height=38, fg_color="transparent", hover_color="#D9E2E9", text_color="#3E657D")
-        self.update_button.grid(row=0, column=1, padx=(0, 8))
+        ctk.CTkLabel(brand, text="小红书原图", font=("STSong", 30, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(brand, text="公开笔记 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        next_theme = "克制玻璃" if self.theme == "neo" else "拟态悬浮"
+        self.theme_button = ctk.CTkButton(header, text=next_theme, width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.switch_theme)
+        self.theme_button.grid(row=0, column=1, padx=(0, 8))
+        self.update_button = ctk.CTkButton(header, text="", width=0, height=38, fg_color="transparent", hover_color=p["secondary_hover"], text_color=p["accent"])
+        self.update_button.grid(row=0, column=2, padx=(0, 8))
         self.update_button.grid_remove()
-        ctk.CTkButton(header, text="⚙  设置", width=104, height=40, corner_radius=12, fg_color="#D6E0E8", hover_color="#C7D4DE", text_color="#253A4A", font=("Microsoft YaHei UI", 13, "bold"), command=self.open_settings).grid(row=0, column=2)
+        ctk.CTkButton(header, text="⚙  设置", width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], font=("Microsoft YaHei UI", 13, "bold"), command=self.open_settings).grid(row=0, column=3)
 
-        body = ctk.CTkFrame(self, corner_radius=24, fg_color="#F7F9FA", border_width=1, border_color="#D8E0E6")
+        body = ctk.CTkFrame(self, corner_radius=24, fg_color=p["surface"], border_width=1, border_color=p["line"])
         body.grid(row=1, column=0, sticky="nsew", padx=38, pady=(0, 24))
         body.grid_columnconfigure(0, weight=3)
         body.grid_columnconfigure(1, weight=2)
         body.grid_rowconfigure(1, weight=1)
 
-        ctk.CTkLabel(body, text="粘贴分享内容", font=("Microsoft YaHei UI", 15, "bold"), text_color="#233442").grid(row=0, column=0, sticky="w", padx=(28, 12), pady=(26, 10))
-        self.folder_label = ctk.CTkLabel(body, text="", font=("Microsoft YaHei UI", 11), text_color="#718391", anchor="e")
+        ctk.CTkLabel(body, text="粘贴分享内容", font=("Microsoft YaHei UI", 15, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w", padx=(28, 12), pady=(26, 10))
+        self.folder_label = ctk.CTkLabel(body, text="", font=("Microsoft YaHei UI", 11), text_color=p["muted"], anchor="e")
         self.folder_label.grid(row=0, column=1, sticky="e", padx=(12, 28), pady=(26, 10))
         self.refresh_folder_label()
 
-        self.input_box = ctk.CTkTextbox(body, corner_radius=16, border_width=1, border_color="#D1DBE3", fg_color="#EEF3F6", text_color="#243542", font=("Microsoft YaHei UI", 14), wrap="word")
+        self.input_box = ctk.CTkTextbox(body, corner_radius=16, border_width=1, border_color=p["line"], fg_color=p["input"], text_color=p["text"], font=("Microsoft YaHei UI", 14), wrap="word")
         self.input_box.grid(row=1, column=0, sticky="nsew", padx=(28, 12), pady=(0, 22))
         self.input_box.insert("1.0", "把小红书链接或整段分享文字粘贴到这里……")
-        self.input_box.configure(text_color="#718391")
+        self.input_box.configure(text_color=p["muted"])
         self.input_box.bind("<FocusIn>", self._clear_placeholder, add="+")
 
-        status = ctk.CTkFrame(body, corner_radius=17, fg_color="#E9EFF3")
+        status = ctk.CTkFrame(body, corner_radius=17, fg_color=p["status"])
         status.grid(row=1, column=1, sticky="nsew", padx=(12, 28), pady=(0, 22))
         status.grid_columnconfigure(0, weight=1)
         status.grid_rowconfigure(4, weight=1)
-        ctk.CTkLabel(status, text="下载状态", font=("Microsoft YaHei UI", 12, "bold"), text_color="#6A7D8C").grid(row=0, column=0, sticky="w", padx=20, pady=(20, 6))
-        self.status_title = ctk.CTkLabel(status, text="等待开始", font=("Microsoft YaHei UI", 20, "bold"), text_color="#1E303D")
+        ctk.CTkLabel(status, text="下载状态", font=("Microsoft YaHei UI", 12, "bold"), text_color=p["muted"]).grid(row=0, column=0, sticky="w", padx=20, pady=(20, 6))
+        self.status_title = ctk.CTkLabel(status, text="等待开始", font=("Microsoft YaHei UI", 20, "bold"), text_color=p["text"])
         self.status_title.grid(row=1, column=0, sticky="w", padx=20)
-        self.status_detail = ctk.CTkLabel(status, text="结果将逐条显示", font=("Microsoft YaHei UI", 11), text_color="#718391")
+        self.status_detail = ctk.CTkLabel(status, text="结果将逐条显示", font=("Microsoft YaHei UI", 11), text_color=p["muted"])
         self.status_detail.grid(row=2, column=0, sticky="w", padx=20, pady=(5, 14))
-        self.progress = ctk.CTkProgressBar(status, height=9, corner_radius=6, fg_color="#D3DEE6", progress_color="#4F7892", mode="determinate")
+        self.progress = ctk.CTkProgressBar(status, height=9, corner_radius=6, fg_color=p["line"], progress_color=p["accent"], mode="determinate")
         self.progress.grid(row=3, column=0, sticky="ew", padx=20)
         self.progress.set(0)
-        self.result_box = ctk.CTkTextbox(status, fg_color="transparent", border_width=0, text_color="#405565", font=("Microsoft YaHei UI", 11), wrap="word")
+        self.result_box = ctk.CTkTextbox(status, fg_color="transparent", border_width=0, text_color=p["text"], font=("Microsoft YaHei UI", 11), wrap="word")
         self.result_box.grid(row=4, column=0, sticky="nsew", padx=14, pady=(13, 10))
         self.result_box.configure(state="disabled")
 
         actions = ctk.CTkFrame(body, fg_color="transparent")
         actions.grid(row=2, column=0, columnspan=2, sticky="ew", padx=28, pady=(0, 26))
         actions.grid_columnconfigure(0, weight=1)
-        self.download_button = ctk.CTkButton(actions, text="开始采集", height=50, corner_radius=14, fg_color="#203442", hover_color="#142631", font=("Microsoft YaHei UI", 14, "bold"), command=self.start_download)
+        self.download_button = ctk.CTkButton(actions, text="开始采集", height=50, corner_radius=14, fg_color=p["primary"], hover_color=p["primary_hover"], font=("Microsoft YaHei UI", 14, "bold"), command=self.start_download)
         self.download_button.grid(row=0, column=0, sticky="ew", padx=(0, 10))
-        self.paste_button = ctk.CTkButton(actions, text="粘贴并采集", width=132, height=50, corner_radius=14, fg_color="#527A93", hover_color="#3F687F", command=self.paste_and_start)
+        self.paste_button = ctk.CTkButton(actions, text="粘贴并采集", width=132, height=50, corner_radius=14, fg_color=p["accent"], hover_color=p["accent_hover"], command=self.paste_and_start)
         self.paste_button.grid(row=0, column=1, padx=(0, 10))
         self.paste_button.grid_remove()
-        ctk.CTkButton(actions, text="打开下载文件夹", width=150, height=50, corner_radius=14, fg_color="#DCE5EB", hover_color="#CDD9E1", text_color="#2E4657", command=self.open_output).grid(row=0, column=2)
+        ctk.CTkButton(actions, text="打开下载文件夹", width=150, height=50, corner_radius=14, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.open_output).grid(row=0, column=2)
 
         footer = ctk.CTkFrame(self, fg_color="transparent")
         footer.grid(row=2, column=0, sticky="ew", padx=40, pady=(0, 18))
-        ctk.CTkLabel(footer, text="原始媒体直存 · 作者嵌入的署名会保留", font=("Microsoft YaHei UI", 10), text_color="#7A8B98").pack(side="left")
-        ctk.CTkLabel(footer, text=f"V{__version__}", font=("Microsoft YaHei UI", 10, "bold"), text_color="#7A8B98").pack(side="right")
+        ctk.CTkLabel(footer, text="原始媒体直存 · 作者嵌入的署名会保留", font=("Microsoft YaHei UI", 10), text_color=p["muted"]).pack(side="left")
+        ctk.CTkLabel(footer, text=f"V{__version__}", font=("Microsoft YaHei UI", 10, "bold"), text_color=p["muted"]).pack(side="right")
 
     def _clear_placeholder(self, _event=None):
         if self._placeholder:
             self.input_box.delete("1.0", "end")
-            self.input_box.configure(text_color="#243542")
+            self.input_box.configure(text_color=self.palette["text"])
             self._placeholder = False
 
     def refresh_folder_label(self):
@@ -223,6 +270,29 @@ class DesktopApp(ctk.CTk):
     def open_settings(self):
         if not self.running:
             SettingsDialog(self)
+
+    def switch_theme(self):
+        if self.running:
+            return
+        content = self.input_box.get("1.0", "end").rstrip("\n")
+        was_placeholder = self._placeholder
+        self.theme = "glass" if self.theme == "neo" else "neo"
+        self.settings = save_settings({
+            "output_dir": self.settings["output_dir"],
+            "mode": self.settings.get("mode", "auto"),
+            "auto_update": self.settings.get("auto_update", True),
+            "theme": self.theme,
+        })
+        self.palette = THEME_PALETTES[self.theme]
+        self.configure(fg_color=self.palette["bg"])
+        for child in self.winfo_children():
+            child.destroy()
+        self._build_ui()
+        if not was_placeholder:
+            self.input_box.delete("1.0", "end")
+            self.input_box.insert("1.0", content)
+            self.input_box.configure(text_color=self.palette["text"])
+            self._placeholder = False
 
     def open_output(self):
         folder = Path(self.settings["output_dir"])

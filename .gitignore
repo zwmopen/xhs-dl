@@ -4,6 +4,8 @@ __pycache__/
 dist/
 build/
 .eggs/
+.gradle/
+.idea/
 xhs_downloads/
 v2_test_output/
 *.egg

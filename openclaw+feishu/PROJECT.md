@@ -2,9 +2,11 @@
 
 ## 当前版本
 
-- 当前发布：V2.3.0
+- 当前发布：Windows V2.3.1、Android V1.0.0
 - 仓库：`https://github.com/zwmopen/xhs-dl`
-- 发布页：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.3.0`
+- 上一发布：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.3.0`
+- Windows 发布：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.3.1`
+- Android 发布：`https://github.com/zwmopen/xhs-dl/releases/tag/android-v1.0.0`
 - 上一稳定备份：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.2.1`
 - 本地项目：`D:\AICode\xhs-dl`
 - 本地引擎：`D:\AICode\XHS_Downloader`

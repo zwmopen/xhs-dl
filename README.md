@@ -25,7 +25,7 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
 
-推荐使用 V2.3 便携桌面版：解压 `xhs-dl-v2.3.0-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书无水印下载器.exe`。
+推荐使用 V2.3.1 便携桌面版：解压 `xhs-dl-v2.3.1-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书无水印下载器.exe`。
 
 在 PowerShell 中运行：
 
@@ -68,6 +68,12 @@ xhs-dl-web
 ```
 
 浏览器会打开 `http://127.0.0.1:5678`。Web 版同样使用 V2 本地无水印引擎，并提供实时进度、结果清单与持久化视觉主题。默认保存到 `C:\Users\你的用户名\Downloads`。
+
+## Android 应用
+
+安装发布页中的 `xhs-dl-android-v1.0.0.apk`。可以手动粘贴分享文字，也可以在其他应用中点“分享”并选择“小红书原图”。默认保存到手机 `Download/xhs-dl`，每条笔记仍只包含媒体和 `文案.txt`；历史 JSON 保存在应用内部数据中，不会散落到下载目录。
+
+安卓端与电脑端使用同名的“拟态悬浮 / 克制玻璃”双主题，并记住主题、下载子目录、自动频率和更新检测设置。Android 10 及以上使用系统 MediaStore 保存，不需要索取全部文件权限。
 
 ## 本地输出
 
