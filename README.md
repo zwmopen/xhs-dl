@@ -30,12 +30,12 @@ Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装
 在 PowerShell 中运行：
 
 ```powershell
-cd D:\AICode\xhs-dl
+cd D:\AICode\工具开发\projects\xhs-dl
 .\setup-v2.ps1
 python -m pip install -e .
 ```
 
-安装器会把引擎放在 `D:\AICode\XHS_Downloader`，并为它单独准备 Python 3.12 环境，不影响系统 Python。
+安装器会把引擎放在 `D:\AICode\工具开发\projects\XHS_Downloader`，并为它单独准备 Python 3.12 环境，不影响系统 Python。
 
 ## 直接使用
 
@@ -49,7 +49,7 @@ xhs-dl "http://xhslink.com/o/70dt8TsFJon"
 xhs-dl -f links.txt -o D:\Download\小红书 --mode slow
 
 # 明确指定本地引擎
-xhs-dl "链接" --engine-home D:\AICode\XHS_Downloader
+xhs-dl "链接" --engine-home D:\AICode\工具开发\projects\XHS_Downloader
 
 # 仅在确实需要旧版网页解析时使用（可能有水印）
 xhs-dl "链接" --engine v1

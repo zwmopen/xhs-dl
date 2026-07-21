@@ -9,8 +9,8 @@
 - Android 发布：`https://github.com/zwmopen/xhs-dl/releases/tag/android-v1.1.0`
 - iPhone 源码预览：`https://github.com/zwmopen/xhs-dl/releases/tag/ios-v0.1.0`
 - 上一稳定备份：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.2.1`
-- 本地项目：`D:\AICode\xhs-dl`
-- 本地引擎：`D:\AICode\XHS_Downloader`
+- 本地项目：`D:\AICode\工具开发\projects\xhs-dl`
+- 本地引擎：`D:\AICode\工具开发\projects\XHS_Downloader`
 
 ## 核心能力
 

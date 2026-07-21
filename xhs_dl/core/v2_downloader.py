@@ -50,7 +50,7 @@ class LocalCliEngine:
         candidates.extend([
             project_root / "vendor" / "XHS_Downloader",
             project_root.parent / "XHS_Downloader",
-            Path(r"D:\AICode\XHS_Downloader"),
+            Path(r"D:\AICode\工具开发\projects\XHS_Downloader"),
         ])
         for path in candidates:
             path = path.expanduser().resolve()

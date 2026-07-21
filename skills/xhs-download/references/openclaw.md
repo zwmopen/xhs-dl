@@ -12,7 +12,7 @@ Do not store tokens, cookies, or account credentials in this skill.
 
 From the cloned xhs-dl repository:
 
-`openclaw skills install D:\AICode\xhs-dl\skills\xhs-download --global`
+`openclaw skills install D:\AICode\工具开发\projects\xhs-dl\skills\xhs-download --global`
 
 Then verify:
 

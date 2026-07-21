@@ -11,7 +11,7 @@ def configure_engine_home(executable=None):
     candidates = (
         app_dir / "XHS_Downloader",
         app_dir.parent / "XHS_Downloader",
-        Path(r"D:\AICode\XHS_Downloader"),
+        Path(r"D:\AICode\工具开发\projects\XHS_Downloader"),
     )
     for candidate in candidates:
         if (candidate / "main.py").is_file() and (candidate / "source").is_dir():
