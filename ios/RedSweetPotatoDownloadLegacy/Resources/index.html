@@ -58,13 +58,13 @@
   <main class="app">
     <header>
       <div class="mark">薯</div>
-      <div><h1>红薯下载</h1><div class="subtitle">公开笔记 · 原始媒体直存 · 无需登录</div></div>
+      <div><h1>小红书抖音下载</h1><div class="subtitle">公开作品 · 原始媒体直存 · 无需登录</div></div>
       <button class="iconbtn" onclick="showSettings()" aria-label="设置">⚙︎</button>
     </header>
 
     <section class="card">
       <div class="row between"><div class="eyebrow">粘贴分享内容</div><span class="detected" id="detected">等待链接</span></div>
-      <textarea id="input" placeholder="把小红书分享文字或链接粘贴到这里……" oninput="detect()"></textarea>
+      <textarea id="input" placeholder="把小红书或抖音分享文字、链接粘贴到这里……" oninput="detect()"></textarea>
       <div class="actions">
         <button class="button soft" onclick="send('paste')">只粘贴</button>
         <button class="button" onclick="send('pasteAndCollect')">粘贴并采集</button>
@@ -90,8 +90,8 @@
 
       <div class="section">
         <h3>保存的速度和位置</h3>
-        <p>默认保存到“文件/红薯下载”。也可以选择 iCloud Drive 或“我的 iPhone”中的目录。</p>
-        <div class="folder" id="folder">文件/红薯下载</div>
+        <p>默认保存到“文件/小红书抖音下载”。也可以选择 iCloud Drive 或“我的 iPhone”中的目录。</p>
+        <div class="folder" id="folder">文件/小红书抖音下载</div>
         <div class="stack">
           <button class="button" onclick="send('chooseFolder')">选择下载目录</button>
           <button class="button soft" onclick="send('resetFolder')">恢复默认目录</button>
@@ -99,8 +99,17 @@
       </div>
 
       <div class="section">
+        <h3>图片格式</h3><p>默认高质量 JPG；PNG 无损但文件较大，也可以保持平台原格式。</p>
+        <div class="seg"><button id="jpg" onclick="format('jpg')">JPG</button><button id="png" onclick="format('png')">PNG</button><button id="keep" onclick="format('keep')">原格式</button></div>
+      </div>
+
+      <div class="section">
         <h3>视觉主题</h3><p>所有页面统一使用你偏好的拟态悬浮与克制玻璃语言。</p>
         <div class="seg"><button id="neo" onclick="theme('neo')">拟态悬浮</button><button id="glass" onclick="theme('glass')">克制玻璃</button></div>
+      </div>
+
+      <div class="section">
+        <h3>开发理念</h3><p>本地优先、无需登录、一个主操作；设置、状态、说明和错误反馈都属于同一套视觉语言。</p>
       </div>
 
       <div class="section">
@@ -111,7 +120,7 @@
 
       <div class="section">
         <h3>使用说明</h3>
-        <div class="guide"><b>1 · 粘贴</b><p>复制公开笔记链接，点“粘贴并采集”；也可以手动粘贴后点“开始采集”。</p></div>
+        <div class="guide"><b>1 · 粘贴</b><p>复制小红书或抖音公开作品链接，点“粘贴并采集”；也可以手动粘贴后点“开始采集”。</p></div>
         <div class="guide"><b>2 · 安全频率</b><p>单条直接执行；批量任务会按数量自动采用随机等待，也可以分批运行。</p></div>
         <div class="guide"><b>3 · 保存内容</b><p>每条笔记文件夹只放媒体与“文案.txt”；标题、正文和话题都在文案中。</p></div>
         <div class="guide"><b>4 · 历史数据</b><p>统一 history.json 放在 App 内部，不散落到每条笔记目录，也不做云同步。</p></div>
@@ -141,10 +150,12 @@
     function hideSettings(){document.getElementById('settings').className='sheet';}
     function backdrop(e){if(e.target.id==='settings')hideSettings();}
     function theme(name){ document.body.className=name==='glass'?'glass':''; localStorage.theme=name; document.getElementById('neo').className=name==='neo'?'active':'';document.getElementById('glass').className=name==='glass'?'active':''; }
+    function format(name){ send('setImageFormat',{value:name}); ['jpg','png','keep'].forEach(function(x){document.getElementById(x).className=x===name?'active':'';}); }
     window.nativeEvent=function(name,p){
       if(name==='input'){document.getElementById('input').value=p.text||'';detect();}
       if(name==='folder'){document.getElementById('folder').textContent=p.name;}
       if(name==='version'){document.getElementById('version').textContent=p.value;}
+      if(name==='format'){['jpg','png','keep'].forEach(function(x){document.getElementById(x).className=x===(p.value||'jpg')?'active':'';});}
       if(name==='running'){document.getElementById('collect').disabled=!!p.value;document.getElementById('collect').textContent=p.value?'采集中…':'开始采集';}
       if(name==='status'){document.getElementById('statusTitle').textContent=p.title||'';document.getElementById('statusDetail').textContent=p.detail||'';document.getElementById('bar').style.width=((p.progress||0)*100)+'%';document.getElementById('results').textContent=(p.results||[]).join('\n');}
       if(name==='update'){document.getElementById('update').textContent=p.message||'';}

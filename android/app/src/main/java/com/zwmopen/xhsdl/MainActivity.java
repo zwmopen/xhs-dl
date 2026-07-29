@@ -122,10 +122,10 @@ public final class MainActivity extends Activity {
 
         LinearLayout header = row();
         LinearLayout brand = column();
-        TextView title = text("红薯下载", 30, TEXT, true);
+        TextView title = text("小红书抖音下载", 30, TEXT, true);
         title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
         brand.addView(title);
-        brand.addView(text("公开笔记 · 手机直存 · 无需登录", 12, MUTED, false));
+        brand.addView(text("小红书 / 抖音 · 手机直存 · 无需登录", 12, MUTED, false));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         String theme = preferences.getString("theme", "neo");
         Button themeButton = secondaryButton("neo".equals(theme) ? "克制玻璃" : "拟态悬浮");
@@ -146,7 +146,7 @@ public final class MainActivity extends Activity {
         input.setTextSize(15);
         input.setTextColor(TEXT);
         input.setHintTextColor(MUTED);
-        input.setHint("把小红书链接或整段分享文字粘贴到这里……");
+        input.setHint("把小红书或抖音分享内容粘贴到这里……");
         input.setGravity(Gravity.TOP | Gravity.START);
         input.setPadding(dp(16), dp(15), dp(16), dp(15));
         input.setMinHeight(dp(176));
@@ -241,7 +241,7 @@ public final class MainActivity extends Activity {
         if (running) return;
         List<String> urls = extractUrls(input.getText().toString());
         if (urls.isEmpty()) {
-            Toast.makeText(this, "没有识别到小红书链接", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "没有识别到小红书或抖音链接", Toast.LENGTH_SHORT).show();
             return;
         }
         running = true;
@@ -262,18 +262,22 @@ public final class MainActivity extends Activity {
         int success = 0;
         int failed = 0;
         StringBuilder lines = new StringBuilder();
-        XhsParser parser = new XhsParser();
         MediaSaver saver = new MediaSaver(this);
         HistoryStore history = new HistoryStore(this);
-        String rootFolder = preferences.getString("folder", "红薯下载");
+        String rootFolder = preferences.getString("folder", "小红书抖音下载");
         String treeUri = preferences.getString("download_tree_uri", "");
         for (int i = 0; i < urls.size(); i++) {
             int index = i;
             String url = urls.get(i);
             try {
                 postStatus("正在解析第 " + (i + 1) + " 条", url, percent(i, urls.size()));
-                NoteData note = parser.fetch(url);
-                saver.save(note, rootFolder, treeUri, (done, total) ->
+                NoteData note;
+                if ("douyin".equals(PlatformRouter.detect(url))) {
+                    note = new DouyinParser().fetch(this, url);
+                } else {
+                    note = new XhsParser().fetch(url);
+                }
+                saver.save(note, rootFolder, treeUri, preferences.getString("image_format", "jpg"), (done, total) ->
                         postStatus("正在保存 · " + note.title,
                                 "媒体 " + done + " / " + total, percent(index, urls.size())));
                 history.add(note);
@@ -321,7 +325,7 @@ public final class MainActivity extends Activity {
         int count = extractUrls(input.getText().toString()).size();
         if (count == 0) {
             statusTitle.setText("等待开始");
-            statusDetail.setText("还没有识别到小红书链接");
+            statusDetail.setText("还没有识别到小红书或抖音链接");
             return;
         }
         String configured = preferences.getString("mode", "auto");
@@ -380,7 +384,7 @@ public final class MainActivity extends Activity {
             if (!selected.isEmpty()) intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(selected));
             startActivity(intent);
             String custom = preferences.getString("download_tree_name", "");
-            Toast.makeText(this, custom.isEmpty() ? "文件位于 Download/" + preferences.getString("folder", "红薯下载") : "文件位于 " + custom, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, custom.isEmpty() ? "文件位于 Download/" + preferences.getString("folder", "小红书抖音下载") : "文件位于 " + custom, Toast.LENGTH_LONG).show();
         } catch (Exception error) {
             Toast.makeText(this, "请在设置中查看当前下载目录", Toast.LENGTH_LONG).show();
         }

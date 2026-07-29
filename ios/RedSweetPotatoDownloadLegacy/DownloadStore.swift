@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 final class DownloadStore {
     static let shared = DownloadStore()
@@ -8,7 +9,7 @@ final class DownloadStore {
     private let workQueue = DispatchQueue(label: "com.zwmopen.redsweetpotato.storage")
 
     var currentFolderName: String {
-        return UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/红薯下载"
+        return UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/小红书抖音下载"
     }
 
     func rememberFolder(_ url: URL) throws {
@@ -34,7 +35,8 @@ final class DownloadStore {
                 let access = try self.resolveRoot()
                 let folder = access.url.appendingPathComponent(note.folderName, isDirectory: true)
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                self.download(note.media, index: 0, folder: folder, progress: progress) { error in
+                let imageFormat = UserDefaults.standard.string(forKey: "imageFormat") ?? "jpg"
+                self.download(note.media, index: 0, folder: folder, referer: note.referer, note: note, imageFormat: imageFormat, progress: progress) { error in
                     defer { if access.securityScoped { access.url.stopAccessingSecurityScopedResource() } }
                     if let error = error { completion(error); return }
                     do {
@@ -59,30 +61,46 @@ final class DownloadStore {
         _ media: [MediaItem],
         index: Int,
         folder: URL,
+        referer: String,
+        note: NoteData,
+        imageFormat: String,
         progress: @escaping (Int, Int) -> Void,
         completion: @escaping (Error?) -> Void
     ) {
         guard index < media.count else { completion(nil); return }
         let item = media[index]
-        let destination = folder.appendingPathComponent(String(format: "%02d.%@", index + 1, item.fileExtension))
+        let destination = folder.appendingPathComponent(
+            note.mediaFileName(index: index, item: item, imageFormat: imageFormat)
+        )
         if FileManager.default.fileExists(atPath: destination.path) {
             DispatchQueue.main.async { progress(index + 1, media.count) }
-            download(media, index: index + 1, folder: folder, progress: progress, completion: completion)
+            download(media, index: index + 1, folder: folder, referer: referer, note: note, imageFormat: imageFormat, progress: progress, completion: completion)
             return
         }
         var request = URLRequest(url: item.url, timeoutInterval: 75)
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 12_5 like Mac OS X)", forHTTPHeaderField: "User-Agent")
-        request.setValue("https://www.xiaohongshu.com/", forHTTPHeaderField: "Referer")
+        request.setValue(referer, forHTTPHeaderField: "Referer")
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error { completion(error); return }
             if let http = response as? HTTPURLResponse, !(200..<400).contains(http.statusCode) {
                 completion(URLError(.badServerResponse)); return
             }
-            guard let data = data else { completion(URLError(.zeroByteResource)); return }
+            guard var data = data else { completion(URLError(.zeroByteResource)); return }
             do {
+                let video = ["mp4", "mov"].contains(item.fileExtension.lowercased())
+                if !video && imageFormat != "keep" {
+                    guard let image = UIImage(data: data) else { throw AppFailure.storage("图片格式解析失败") }
+                    if imageFormat == "png" {
+                        guard let converted = image.pngData() else { throw AppFailure.storage("PNG 转码失败") }
+                        data = converted
+                    } else {
+                        guard let converted = image.jpegData(compressionQuality: 0.95) else { throw AppFailure.storage("JPG 转码失败") }
+                        data = converted
+                    }
+                }
                 try data.write(to: destination, options: .atomic)
                 DispatchQueue.main.async { progress(index + 1, media.count) }
-                self.download(media, index: index + 1, folder: folder, progress: progress, completion: completion)
+                self.download(media, index: index + 1, folder: folder, referer: referer, note: note, imageFormat: imageFormat, progress: progress, completion: completion)
             } catch {
                 completion(error)
             }
@@ -91,7 +109,7 @@ final class DownloadStore {
 
     private func defaultRoot() throws -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let root = documents.appendingPathComponent("红薯下载", isDirectory: true)
+        let root = documents.appendingPathComponent("小红书抖音下载", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         return root
     }

@@ -12,11 +12,12 @@ def main():
             stream.reconfigure(errors="replace")
 
     parser = argparse.ArgumentParser(
-        description="红薯下载：小红书原始媒体下载器 (V2)",
+        description="小红书抖音下载：公开作品原始媒体下载器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
   xhs-dl "http://xhslink.com/o/xxxxx"
+  xhs-dl "https://v.douyin.com/xxxxx/"
   xhs-dl "链接1" "链接2" "链接3"
   xhs-dl -f links.txt
   xhs-dl -f links.txt -o ./我的笔记
@@ -36,7 +37,7 @@ def main():
 默认使用本地无水印引擎。需要旧版网页解析时可显式传 --engine v1。
         """
     )
-    parser.add_argument("urls", nargs="*", help="小红书链接或分享文本")
+    parser.add_argument("urls", nargs="*", help="小红书、抖音链接或分享文本")
     parser.add_argument("-f", "--file", help="从文件读取链接")
     parser.add_argument("-o", "--output", default="./xhs_downloads",
                         help="保存目录 (默认: ./xhs_downloads)")
@@ -49,6 +50,8 @@ def main():
                         help="XHS_Downloader 本地目录（通常无需填写）")
     parser.add_argument("--timeout", type=int, default=300,
                         help="每条笔记最大等待秒数（默认: 300）")
+    parser.add_argument("--image-format", choices=["jpg", "png", "keep"], default="jpg",
+                        help="图片输出格式（默认: jpg）")
     args = parser.parse_args()
 
     # 无参数启动（例如双击启动文件）时，进入一次粘贴输入模式。
@@ -83,7 +86,7 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  红薯下载 v2.4.0  小红书原始媒体下载器")
+    print("  小红书抖音下载 v2.5.0")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:
@@ -102,18 +105,15 @@ def main():
         print("  [提醒] 正在使用旧版 V1，引擎输出可能带平台水印。")
         dl = XhsDownloader(output_dir=args.output, delay=delay, on_progress=on_progress)
     else:
-        from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
-        try:
-            dl = XhsV2Downloader(
-                output_dir=args.output,
-                delay=delay,
-                on_progress=on_progress,
-                engine_home=args.engine_home,
-                timeout=args.timeout,
-            )
-        except EngineNotReady as exc:
-            print(f"\n[错误] {exc}")
-            sys.exit(2)
+        from xhs_dl.core.unified_downloader import UnifiedDownloader
+        dl = UnifiedDownloader(
+            output_dir=args.output,
+            delay=delay,
+            on_progress=on_progress,
+            engine_home=args.engine_home,
+            timeout=args.timeout,
+            image_format=args.image_format,
+        )
     result = dl.download(all_urls)
 
     print(f"\n{'='*60}")

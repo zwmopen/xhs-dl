@@ -15,4 +15,4 @@ Do not use pure-white card walls, generic admin-dashboard statistics, large satu
 
 The canonical full specification is stored in the user's shared memory at:
 
-`D:\AICode\AI\data\01-团建策划-江湖有旅人\05-知识库\07-销售转化与策划师承接系统\06-转化助手应用\说明\视觉语言规范.md`
+`D:\AICode\项目推进\projects\江湖有旅人\主项目\05-知识库\07-销售转化与策划师承接系统\06-转化助手应用\说明\视觉语言规范.md`

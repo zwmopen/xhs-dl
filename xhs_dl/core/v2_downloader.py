@@ -17,6 +17,7 @@ from typing import Callable, List, Optional, Tuple
 
 from .downloader import DELAY_MODES, extract_urls_from_text
 from .models import DownloadResult, NoteResult
+from .media_names import convert_image_file, media_filename
 from xhs_dl.storage import add_history
 
 logger = logging.getLogger(__name__)
@@ -33,9 +34,10 @@ class EngineNotReady(RuntimeError):
 class LocalCliEngine:
     """XHS-Downloader 的本地 CLI 适配器。"""
 
-    def __init__(self, home: Optional[str] = None, timeout: int = 300):
+    def __init__(self, home: Optional[str] = None, timeout: int = 300, image_format: str = "jpg"):
         self.home = self._discover_home(home)
         self.timeout = timeout
+        self.image_format = image_format
         self.python = self._discover_python()
 
     @staticmethod
@@ -133,6 +135,12 @@ class LocalCliEngine:
                 path for path in after
                 if path.name in clean_stdout
             )
+        if not selected_files and metadata:
+            expected = self._expected_note_dir(output_dir, metadata)
+            selected_files = sorted(
+                path for path in after
+                if path.parent == expected and path.suffix.lower() in MEDIA_EXTENSIONS
+            )
 
         if not selected_files:
             detail = self._last_useful_line(clean_stdout)
@@ -151,6 +159,7 @@ class LocalCliEngine:
         author = str(metadata.get("作者昵称") or "")
         description = str(metadata.get("作品描述") or "")
         topics = str(metadata.get("作品标签") or "")
+        selected_files = self._rename_media_files(selected_files, title, self.image_format)
         result = NoteResult(
             url=url,
             success=True,
@@ -226,6 +235,37 @@ class LocalCliEngine:
             note_dir = desired
         return note_dir, files
 
+    @classmethod
+    def _expected_note_dir(cls, output_dir: Path, metadata: dict) -> Path:
+        comments = cls._safe_name(metadata.get("评论数量") or "未知", 16)
+        likes = cls._safe_name(metadata.get("点赞数量") or "未知", 16)
+        title = cls._safe_name(metadata.get("作品标题") or "未命名笔记")
+        author = cls._safe_name(metadata.get("作者昵称") or "未知作者", 32)
+        return output_dir / f"评{comments}-赞{likes}-{title}-{author}"
+
+    @staticmethod
+    def _rename_media_files(files: List[Path], title: str, image_format: str = "jpg") -> List[Path]:
+        renamed = []
+        for index, path in enumerate(sorted(files)):
+            is_video = path.suffix.lower() in VIDEO_EXTENSIONS
+            if not is_video:
+                path = convert_image_file(path, image_format)
+            target = path.with_name(
+                media_filename(
+                    index,
+                    title,
+                    path.suffix,
+                    is_video=is_video,
+                )
+            )
+            if target != path:
+                if target.exists():
+                    path.unlink()
+                else:
+                    path.rename(target)
+            renamed.append(target)
+        return renamed
+
     @staticmethod
     def _last_useful_line(text: str) -> str:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -257,11 +297,11 @@ class XhsV2Downloader:
                  delay: Tuple[float, float] = DELAY_MODES["cautious"],
                  on_progress: Optional[Callable] = None,
                  engine_home: Optional[str] = None,
-                 timeout: int = 300):
+                 timeout: int = 300, image_format: str = "jpg"):
         self.output_dir = output_dir
         self.delay = delay
         self.on_progress = on_progress
-        self.engine = LocalCliEngine(engine_home, timeout=timeout)
+        self.engine = LocalCliEngine(engine_home, timeout=timeout, image_format=image_format)
 
     def download_text(self, text: str) -> DownloadResult:
         return self.download(extract_urls_from_text(text))

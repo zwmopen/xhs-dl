@@ -7,13 +7,13 @@ actor DownloadStore {
 
     func defaultRoot() throws -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let root = documents.appendingPathComponent("红薯下载", isDirectory: true)
+        let root = documents.appendingPathComponent("小红书抖音下载", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         return root
     }
 
     func currentFolderName() -> String {
-        UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/红薯下载"
+        UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/小红书抖音下载"
     }
 
     func rememberFolder(_ url: URL) throws {

@@ -4,6 +4,8 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -24,16 +26,19 @@ public final class MediaSaver {
         this.context = context.getApplicationContext();
     }
 
-    public int save(NoteData note, String rootFolder, String treeUri, Progress progress) throws IOException {
+    public int save(NoteData note, String rootFolder, String treeUri, String imageFormat, Progress progress) throws IOException {
         if (treeUri != null && !treeUri.trim().isEmpty()) {
-            return saveToTree(note, Uri.parse(treeUri), progress);
+            return saveToTree(note, Uri.parse(treeUri), imageFormat, progress);
         }
         String relative = Environment.DIRECTORY_DOWNLOADS + "/" + cleanFolder(rootFolder) + "/" + note.folderName() + "/";
         int completed = 0;
         for (int i = 0; i < note.media.size(); i++) {
             NoteData.MediaItem item = note.media.get(i);
-            String fileName = String.format("%02d.%s", i + 1, item.extension);
-            if (!exists(fileName, relative)) writeFromNetwork(item.url, fileName, item.mimeType, relative);
+            String fileName = note.mediaFileName(i, item, imageFormat);
+            String mime = outputMime(item, imageFormat);
+            if (!exists(fileName, relative)) {
+                writeFromNetwork(item.url, fileName, mime, relative, note.referer, imageFormat, item.mimeType);
+            }
             completed++;
             if (progress != null) progress.onMedia(completed, note.media.size());
         }
@@ -41,19 +46,19 @@ public final class MediaSaver {
         return completed;
     }
 
-    private int saveToTree(NoteData note, Uri treeUri, Progress progress) throws IOException {
+    private int saveToTree(NoteData note, Uri treeUri, String imageFormat, Progress progress) throws IOException {
         Uri root = DocumentsContract.buildDocumentUriUsingTree(
                 treeUri, DocumentsContract.getTreeDocumentId(treeUri));
         Uri noteDirectory = findOrCreateDirectory(root, note.folderName());
         int completed = 0;
         for (int i = 0; i < note.media.size(); i++) {
             NoteData.MediaItem item = note.media.get(i);
-            String fileName = String.format("%02d.%s", i + 1, item.extension);
+            String fileName = note.mediaFileName(i, item, imageFormat);
             if (findChild(noteDirectory, fileName) == null) {
                 Uri destination = DocumentsContract.createDocument(
-                        context.getContentResolver(), noteDirectory, item.mimeType, fileName);
+                        context.getContentResolver(), noteDirectory, outputMime(item, imageFormat), fileName);
                 if (destination == null) throw new IOException("无法在所选目录创建媒体文件");
-                writeTreeNetwork(item.url, destination);
+                writeTreeNetwork(item.url, destination, note.referer, imageFormat, item.mimeType);
             }
             completed++;
             if (progress != null) progress.onMedia(completed, note.media.size());
@@ -100,21 +105,19 @@ public final class MediaSaver {
         return null;
     }
 
-    private void writeTreeNetwork(String source, Uri destination) throws IOException {
+    private void writeTreeNetwork(String source, Uri destination, String referer, String imageFormat, String originalMime) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(source).openConnection();
         connection.setConnectTimeout(20000);
         connection.setReadTimeout(60000);
         connection.setRequestProperty("User-Agent", USER_AGENT);
-        connection.setRequestProperty("Referer", "https://www.xiaohongshu.com/");
+        connection.setRequestProperty("Referer", referer);
         connection.connect();
         int status = connection.getResponseCode();
         if (status < 200 || status >= 400) throw new IOException("媒体下载失败：HTTP " + status);
         try (InputStream input = connection.getInputStream();
              OutputStream output = context.getContentResolver().openOutputStream(destination, "w")) {
             if (output == null) throw new IOException("无法写入所选目录");
-            byte[] buffer = new byte[128 * 1024];
-            int count;
-            while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
+            writeContent(input, output, imageFormat, originalMime);
         } catch (IOException error) {
             try { DocumentsContract.deleteDocument(context.getContentResolver(), destination); }
             catch (Exception ignored) {}
@@ -124,12 +127,12 @@ public final class MediaSaver {
         }
     }
 
-    private void writeFromNetwork(String source, String name, String mime, String relative) throws IOException {
+    private void writeFromNetwork(String source, String name, String mime, String relative, String referer, String imageFormat, String originalMime) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(source).openConnection();
         connection.setConnectTimeout(20000);
         connection.setReadTimeout(60000);
         connection.setRequestProperty("User-Agent", USER_AGENT);
-        connection.setRequestProperty("Referer", "https://www.xiaohongshu.com/");
+        connection.setRequestProperty("Referer", referer);
         connection.connect();
         int status = connection.getResponseCode();
         if (status < 200 || status >= 400) throw new IOException("媒体下载失败：HTTP " + status);
@@ -137,9 +140,7 @@ public final class MediaSaver {
         try (InputStream input = connection.getInputStream();
              OutputStream output = context.getContentResolver().openOutputStream(destination)) {
             if (output == null) throw new IOException("无法写入手机存储");
-            byte[] buffer = new byte[128 * 1024];
-            int count;
-            while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
+            writeContent(input, output, imageFormat, originalMime);
         } catch (IOException error) {
             context.getContentResolver().delete(destination, null, null);
             throw error;
@@ -147,6 +148,31 @@ public final class MediaSaver {
             connection.disconnect();
         }
         publish(destination);
+    }
+
+    private static String outputMime(NoteData.MediaItem item, String imageFormat) {
+        if (item.mimeType != null && item.mimeType.startsWith("video/")) return item.mimeType;
+        if ("jpg".equals(imageFormat)) return "image/jpeg";
+        if ("png".equals(imageFormat)) return "image/png";
+        return item.mimeType;
+    }
+
+    private static void writeContent(InputStream input, OutputStream output, String imageFormat, String originalMime) throws IOException {
+        boolean image = originalMime != null && originalMime.startsWith("image/");
+        if (image && !"keep".equals(imageFormat)) {
+            Bitmap bitmap = BitmapFactory.decodeStream(input);
+            if (bitmap == null) throw new IOException("图片格式解析失败");
+            Bitmap.CompressFormat format = "png".equals(imageFormat)
+                    ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+            int quality = "png".equals(imageFormat) ? 100 : 95;
+            boolean saved = bitmap.compress(format, quality, output);
+            bitmap.recycle();
+            if (!saved) throw new IOException("图片转码失败");
+            return;
+        }
+        byte[] buffer = new byte[128 * 1024];
+        int count;
+        while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
     }
 
     private void replaceText(String name, String text, String relative) throws IOException {

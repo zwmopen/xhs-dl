@@ -11,7 +11,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleDisplayName</key>
-    <string>红薯下载</string>
+	<string>小红书抖音下载</string>
     <key>CFBundleShortVersionString</key>
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>

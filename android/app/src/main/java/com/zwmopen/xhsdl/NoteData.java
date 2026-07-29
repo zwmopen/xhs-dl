@@ -5,6 +5,7 @@ import java.util.List;
 
 public final class NoteData {
     public String sourceUrl = "";
+    public String referer = "https://www.xiaohongshu.com/";
     public String noteId = "";
     public String title = "";
     public String description = "";
@@ -29,6 +30,18 @@ public final class NoteData {
         return "标题：" + title + "\n\n正文：\n"
                 + (description.isEmpty() ? "（正文为空）" : description)
                 + "\n\n话题：" + (tags.length() == 0 ? "（无话题）" : tags) + "\n";
+    }
+
+    public String mediaFileName(int index, MediaItem item) {
+        return mediaFileName(index, item, "jpg");
+    }
+
+    public String mediaFileName(int index, MediaItem item, String imageFormat) {
+        boolean video = item.mimeType != null && item.mimeType.startsWith("video/");
+        String label = video ? "视频" : (index == 0 ? "封面" : "内页" + index);
+        String extension = video || "keep".equals(imageFormat) ? item.extension : imageFormat;
+        return label + "-" + safe(title.isEmpty() ? "未命名作品" : title, 64)
+                + "." + extension.replaceFirst("^\\.+", "").toLowerCase();
     }
 
     private static String safe(String value, int limit) {

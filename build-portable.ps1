@@ -1,10 +1,10 @@
 param(
-    [string]$Version = "2.4.0"
+    [string]$Version = "2.5.0"
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path $PSScriptRoot).Path
-$ProductName = -join ([char[]](0x7EA2, 0x85AF, 0x4E0B, 0x8F7D))
+$ProductName = -join ([char[]](0x5C0F, 0x7EA2, 0x4E66, 0x6296, 0x97F3, 0x4E0B, 0x8F7D))
 $BuildRoot = Join-Path $ProjectRoot "build\portable"
 $OutputRoot = Join-Path $BuildRoot "output"
 $StageRoot = Join-Path $BuildRoot "stage\$ProductName-portable-v$Version"
@@ -23,6 +23,7 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
     --icon (Join-Path $ProjectRoot "assets\red-sweet-potato-download.ico") `
     --paths $ProjectRoot `
     --collect-all customtkinter `
+    --collect-all playwright `
     --add-data "$(Join-Path $ProjectRoot 'xhs_dl\engine_bridge.py');xhs_dl" `
     --distpath $OutputRoot `
     --workpath (Join-Path $BuildRoot "work") `

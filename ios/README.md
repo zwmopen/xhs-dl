@@ -1,4 +1,4 @@
-# 红薯下载 iPhone 客户端
+# 小红书抖音下载 iPhone 客户端
 
 ## 当前状态
 
@@ -14,7 +14,7 @@ iOS V0.1.0。已完成 SwiftUI 界面、公开笔记解析、原图/视频保存
 
 ## 数据位置
 
-- 默认下载：App 的 Documents/红薯下载，可在“文件”App 中看到。
+- 默认下载：App 的 Documents/小红书抖音下载，可在“文件”App 中看到。
 - 自选目录：使用系统文件夹选择器保存持久书签，写入期间启用 security-scoped access，授权可随时在设置中恢复默认。
 - 历史：Application Support/history.json，仅在本机保存。
 

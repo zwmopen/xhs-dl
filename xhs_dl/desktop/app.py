@@ -11,7 +11,8 @@ import requests
 
 from xhs_dl import __version__
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
-from xhs_dl.core.v2_downloader import EngineNotReady, XhsV2Downloader
+from xhs_dl.core.v2_downloader import EngineNotReady
+from xhs_dl.core.unified_downloader import UnifiedDownloader
 from xhs_dl.storage import history_path, load_settings, save_settings
 
 
@@ -23,6 +24,11 @@ MODE_LABELS = {
     "稳妥（35–55 秒）": "cautious",
     "慢速（55–85 秒）": "slow",
     "极慢（110–160 秒）": "very-slow",
+}
+IMAGE_FORMAT_LABELS = {
+    "JPG（推荐 · 兼容且省空间）": "jpg",
+    "PNG（无损 · 文件较大）": "png",
+    "保持平台原格式": "keep",
 }
 THEME_PALETTES = {
     "neo": {
@@ -119,11 +125,23 @@ class SettingsDialog(ctk.CTkToplevel):
         self.mode_menu = ctk.CTkOptionMenu(options, values=list(MODE_LABELS), height=44, corner_radius=11, fg_color=p["secondary"], button_color=p["accent"], button_hover_color=p["accent_hover"], text_color=p["text"])
         self.mode_menu.set(current_label)
         self.mode_menu.grid(row=1, column=0, sticky="ew")
+        ctk.CTkLabel(options, text="图片格式", font=("Microsoft YaHei UI", 13, "bold"), text_color=p["text"]).grid(row=2, column=0, sticky="w", pady=(18, 8))
+        current_format = next(
+            (label for label, value in IMAGE_FORMAT_LABELS.items() if value == settings.get("image_format", "jpg")),
+            "JPG（推荐 · 兼容且省空间）",
+        )
+        self.format_menu = ctk.CTkOptionMenu(
+            options, values=list(IMAGE_FORMAT_LABELS), height=44, corner_radius=11,
+            fg_color=p["secondary"], button_color=p["accent"],
+            button_hover_color=p["accent_hover"], text_color=p["text"],
+        )
+        self.format_menu.set(current_format)
+        self.format_menu.grid(row=3, column=0, sticky="ew")
         self.update_switch = ctk.CTkSwitch(options, text="启动时自动检测新版本", font=("Microsoft YaHei UI", 12), text_color=p["text"], progress_color=p["accent"])
-        self.update_switch.grid(row=2, column=0, sticky="w", pady=(18, 8))
+        self.update_switch.grid(row=4, column=0, sticky="w", pady=(18, 8))
         self.update_switch.select() if settings.get("auto_update", True) else self.update_switch.deselect()
         tools = ctk.CTkFrame(options, fg_color="transparent")
-        tools.grid(row=3, column=0, sticky="ew", pady=(10, 0))
+        tools.grid(row=5, column=0, sticky="ew", pady=(10, 0))
         tools.grid_columnconfigure(0, weight=1)
         tools.grid_columnconfigure(1, weight=1)
         ctk.CTkButton(
@@ -136,6 +154,18 @@ class SettingsDialog(ctk.CTkToplevel):
             fg_color=p["accent"], hover_color=p["accent_hover"], text_color="#FFFFFF",
             command=master.check_update_manual,
         ).grid(row=0, column=1, sticky="ew", padx=(5, 0))
+        philosophy = ctk.CTkFrame(options, corner_radius=14, fg_color=p["status"])
+        philosophy.grid(row=6, column=0, sticky="ew", pady=(18, 0))
+        ctk.CTkLabel(
+            philosophy, text="开发理念", font=("Microsoft YaHei UI", 13, "bold"),
+            text_color=p["text"],
+        ).pack(anchor="w", padx=15, pady=(13, 3))
+        ctk.CTkLabel(
+            philosophy,
+            text="本地优先、无需登录、一个主操作；所有细节统一使用拟态悬浮 / 克制玻璃视觉语言。",
+            font=("Microsoft YaHei UI", 11), text_color=p["muted"], wraplength=540,
+            justify="left",
+        ).pack(anchor="w", padx=15, pady=(0, 13))
 
         self.save_button = ctk.CTkButton(
             self, text="保存设置", height=50, corner_radius=13,
@@ -165,6 +195,7 @@ class SettingsDialog(ctk.CTkToplevel):
             "mode": MODE_LABELS[self.mode_menu.get()],
             "auto_update": bool(self.update_switch.get()),
             "theme": self.master_app.theme,
+            "image_format": IMAGE_FORMAT_LABELS[self.format_menu.get()],
         })
         self.master_app.refresh_folder_label()
         self.destroy()
@@ -185,7 +216,7 @@ class DesktopApp(ctk.CTk):
         self.running = False
         self._placeholder = True
         self._clipboard_text = ""
-        self.title("红薯下载")
+        self.title("小红书抖音下载")
         window_width = min(1080, max(900, screen_width - 40))
         window_height = min(700, max(620, screen_height - 80))
         self.geometry(f"{window_width}x{window_height}")
@@ -212,8 +243,8 @@ class DesktopApp(ctk.CTk):
         header.grid_columnconfigure(0, weight=1)
         brand = ctk.CTkFrame(header, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="红薯下载", font=("STSong", 30, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="公开笔记 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        ctk.CTkLabel(brand, text="小红书抖音下载", font=("STSong", 28, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(brand, text="小红书 / 抖音 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
         next_theme = "克制玻璃" if self.theme == "neo" else "拟态悬浮"
         self.theme_button = ctk.CTkButton(header, text=next_theme, width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.switch_theme)
         self.theme_button.grid(row=0, column=1, padx=(0, 8))
@@ -235,7 +266,7 @@ class DesktopApp(ctk.CTk):
 
         self.input_box = ctk.CTkTextbox(body, corner_radius=16, border_width=1, border_color=p["line"], fg_color=p["input"], text_color=p["text"], font=("Microsoft YaHei UI", 14), wrap="word")
         self.input_box.grid(row=1, column=0, sticky="nsew", padx=(28, 12), pady=(0, 22))
-        self.input_box.insert("1.0", "把小红书链接或整段分享文字粘贴到这里……")
+        self.input_box.insert("1.0", "把小红书或抖音分享内容粘贴到这里……")
         self.input_box.configure(text_color=p["muted"])
         self.input_box.bind("<FocusIn>", self._clear_placeholder, add="+")
 
@@ -287,11 +318,13 @@ class DesktopApp(ctk.CTk):
 
     def show_help(self):
         messagebox.showinfo(
-            "红薯下载 · 使用说明",
-            "1. 粘贴一条或多条小红书分享内容。\n"
+            "小红书抖音下载 · 使用说明",
+            "1. 粘贴一条或多条小红书、抖音分享内容。\n"
             "2. 点击“开始采集”；识别到剪贴板链接时也可点“粘贴并采集”。\n"
             "3. 下载目录可在设置中随时更改，默认是系统下载文件夹。\n\n"
-            "软件只处理你有权保存的公开内容，不需要登录。批量任务会自动放慢速度。"
+            "4. 图片默认转为高质量 JPG，也可在设置中选择 PNG 或保持原格式。\n\n"
+            "软件只处理你有权保存的公开内容，不读取浏览器账号，不需要登录。"
+            "抖音由本机 Edge 的临时无痕环境解析，批量任务会自动放慢速度。"
         )
 
     def check_update_manual(self):
@@ -308,6 +341,7 @@ class DesktopApp(ctk.CTk):
             "mode": self.settings.get("mode", "auto"),
             "auto_update": self.settings.get("auto_update", True),
             "theme": self.theme,
+            "image_format": self.settings.get("image_format", "jpg"),
         })
         self.palette = THEME_PALETTES[self.theme]
         self.configure(fg_color=self.palette["bg"])
@@ -346,7 +380,7 @@ class DesktopApp(ctk.CTk):
         urls = extract_urls_from_text(self.input_box.get("1.0", "end"))
         if not urls:
             self.status_title.configure(text="等待开始")
-            self.status_detail.configure(text="还没有识别到小红书链接")
+            self.status_detail.configure(text="还没有识别到小红书或抖音链接")
             return
         configured = self.settings.get("mode", "auto")
         selected = automatic_mode(len(urls)) if configured == "auto" else configured
@@ -369,7 +403,7 @@ class DesktopApp(ctk.CTk):
         text = self.input_box.get("1.0", "end").strip()
         urls = extract_urls_from_text(text)
         if not urls:
-            messagebox.showwarning("还缺少链接", "请先粘贴至少一条小红书分享链接。")
+            messagebox.showwarning("还缺少链接", "请先粘贴至少一条小红书或抖音分享链接。")
             return
         self.running = True
         self.download_button.configure(state="disabled", text="采集中")
@@ -391,10 +425,11 @@ class DesktopApp(ctk.CTk):
             self.after(0, lambda: self._update_progress(index, total, lines))
 
         try:
-            downloader = XhsV2Downloader(
+            downloader = UnifiedDownloader(
                 output_dir=self.settings["output_dir"],
                 delay=DELAY_MODES[selected_mode],
                 on_progress=on_progress,
+                image_format=self.settings.get("image_format", "jpg"),
             )
             result = downloader.download(urls)
             self.after(0, lambda: self._finish_download(result.success_count, result.fail_count))

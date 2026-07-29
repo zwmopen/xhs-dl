@@ -3,12 +3,13 @@
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Download public Xiaohongshu notes")
+    parser = argparse.ArgumentParser(description="Download public Xiaohongshu or Douyin works")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--text", help="Share text or one/more URLs")
     source.add_argument("--file", help="UTF-8 file containing share text or URLs")
@@ -25,8 +26,8 @@ def parse_args():
 def main() -> int:
     args = parse_args()
     try:
-        from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
-        from xhs_dl.core.v2_downloader import EngineNotReady, XhsV2Downloader
+        from xhs_dl.core.downloader import DELAY_MODES
+        from xhs_dl.core.unified_downloader import UnifiedDownloader
         from xhs_dl.storage import history_path
     except ImportError as exc:
         print(json.dumps({
@@ -43,20 +44,26 @@ def main() -> int:
         except OSError as exc:
             print(json.dumps({"success": 0, "failed": 1, "error": str(exc)}, ensure_ascii=False))
             return 2
-    urls = extract_urls_from_text(text or "")
+    urls = []
+    seen = set()
+    for match in re.finditer(r'https?://[^\s<>"\']+', text or "", re.IGNORECASE):
+        url = match.group(0).rstrip("，,。.；;）)】]!?")
+        if url not in seen:
+            seen.add(url)
+            urls.append(url)
     if not urls:
         print(json.dumps({"success": 0, "failed": 1, "error": "No supported URL found"}, ensure_ascii=False))
         return 2
 
     try:
-        downloader = XhsV2Downloader(
+        downloader = UnifiedDownloader(
             output_dir=args.output,
             delay=DELAY_MODES[args.mode],
             engine_home=args.engine_home,
             timeout=args.timeout,
         )
         result = downloader.download(urls)
-    except EngineNotReady as exc:
+    except Exception as exc:
         print(json.dumps({"success": 0, "failed": len(urls), "error": str(exc)}, ensure_ascii=False))
         return 2
 

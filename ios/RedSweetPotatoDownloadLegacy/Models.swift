@@ -16,6 +16,11 @@ struct NoteData {
     let topics: [String]
     let media: [MediaItem]
 
+    var referer: String {
+        let host = sourceURL.host?.lowercased() ?? ""
+        return host.contains("douyin.com") ? "https://www.douyin.com/" : "https://www.xiaohongshu.com/"
+    }
+
     var folderName: String {
         return "评\(safe(comments, limit: 12))-赞\(safe(likes, limit: 12))-\(safe(title.isEmpty ? "未命名笔记" : title, limit: 52))-\(safe(author.isEmpty ? "未知作者" : author, limit: 28))"
     }
@@ -31,6 +36,13 @@ struct NoteData {
         let cleaned = value.components(separatedBy: invalid).joined(separator: "_")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return String((cleaned.isEmpty ? "未知" : cleaned).prefix(limit))
+    }
+
+    func mediaFileName(index: Int, item: MediaItem, imageFormat: String) -> String {
+        let video = ["mp4", "mov"].contains(item.fileExtension.lowercased())
+        let label = video ? "视频" : (index == 0 ? "封面" : "内页\(index)")
+        let ext = video || imageFormat == "keep" ? item.fileExtension : imageFormat
+        return "\(label)-\(safe(title.isEmpty ? "未命名作品" : title, limit: 64)).\(ext.lowercased())"
     }
 }
 

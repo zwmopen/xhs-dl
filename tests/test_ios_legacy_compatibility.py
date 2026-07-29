@@ -39,7 +39,7 @@ def test_legacy_interface_keeps_product_language_and_settings():
     html = (LEGACY / "Resources" / "index.html").read_text(encoding="utf-8")
 
     for label in (
-        "红薯下载",
+        "小红书抖音下载",
         "粘贴并采集",
         "开始采集",
         "设置",

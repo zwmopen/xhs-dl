@@ -66,6 +66,7 @@ def load_settings():
         "mode": "auto",
         "auto_update": True,
         "theme": "neo",
+        "image_format": "jpg",
     }
     with _LOCK:
         value = _read_json(settings_path(), {})
@@ -80,6 +81,9 @@ def save_settings(value):
         "mode": value.get("mode", "auto"),
         "auto_update": bool(value.get("auto_update", True)),
         "theme": "glass" if value.get("theme") == "glass" else "neo",
+        "image_format": value.get("image_format")
+        if value.get("image_format") in {"jpg", "png", "keep"}
+        else "jpg",
     }
     with _LOCK:
         _write_json(settings_path(), allowed)

@@ -7,6 +7,7 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
     private var resultLines: [String] = []
     private var automationStarted = false
     private var automationResultRequested = false
+    private var douyinParser: DouyinParser?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,6 +40,7 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         emit("folder", payload: ["name": DownloadStore.shared.currentFolderName])
         emit("version", payload: ["value": versionText])
+        emit("format", payload: ["value": UserDefaults.standard.string(forKey: "imageFormat") ?? "jpg"])
         runCabledDiagnosticsIfRequested()
     }
 
@@ -58,6 +60,11 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
         case "resetFolder":
             DownloadStore.shared.useDefaultFolder()
             emit("folder", payload: ["name": DownloadStore.shared.currentFolderName])
+        case "setImageFormat":
+            let value = body["value"] as? String ?? "jpg"
+            let selected = ["jpg", "png", "keep"].contains(value) ? value : "jpg"
+            UserDefaults.standard.set(selected, forKey: "imageFormat")
+            emit("format", payload: ["value": selected])
         case "checkUpdate":
             checkUpdate()
         case "openProject":
@@ -71,7 +78,7 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
         guard !running else { return }
         let targets = extractURLs(text)
         guard !targets.isEmpty else {
-            emit("status", payload: ["title": "未识别到链接", "detail": "请粘贴小红书公开笔记链接。", "progress": 0])
+            emit("status", payload: ["title": "未识别到链接", "detail": "请粘贴小红书或抖音公开作品链接。", "progress": 0])
             return
         }
         running = true
@@ -108,8 +115,9 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
             "progress": Double(index) / Double(targets.count),
             "results": resultLines
         ])
-        XhsParser().fetch(url) { note, error in
+        let handleResult: (NoteData?, Error?) -> Void = { note, error in
             DispatchQueue.main.async {
+                self.douyinParser = nil
                 guard let note = note, error == nil else {
                     self.resultLines.append("\(index + 1)/\(targets.count) 失败：\(error?.localizedDescription ?? "未知错误")")
                     self.finishOne(targets, index: index, success: success, failed: failed + 1)
@@ -134,6 +142,16 @@ final class MainViewController: UIViewController, WKScriptMessageHandler, WKNavi
                     }
                 }
             }
+        }
+        switch PlatformRouter.platform(for: url) {
+        case .douyin:
+            let parser = DouyinParser()
+            douyinParser = parser
+            parser.fetch(url, in: view, completion: handleResult)
+        case .xiaohongshu:
+            XhsParser().fetch(url, completion: handleResult)
+        case .none:
+            handleResult(nil, AppFailure.invalidURL)
         }
     }
 

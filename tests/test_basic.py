@@ -102,11 +102,12 @@ def test_v2_local_cli_adapter():
         }
 
         def fake_run(command, **kwargs):
+            from PIL import Image
             assert "--work-path" in command and "--folder-name" in command
             assert kwargs["env"]["PYTHONPATH"] == str(engine_home.resolve())
             note_dir = output / "2026-07-18_12.00.00_作者_测试标题"
             note_dir.mkdir(parents=True)
-            (note_dir / "图片_1.png").write_bytes(b"fake-png")
+            Image.new("RGB", (2, 2), (20, 40, 60)).save(note_dir / "图片_1.png")
             return SimpleNamespace(
                 returncode=0,
                 stdout=("开始处理作品：6a4dc64100000000220147df\n"
@@ -122,6 +123,7 @@ def test_v2_local_cli_adapter():
         assert result.note_id == "6a4dc64100000000220147df"
         assert result.image_count == 1
         assert Path(result.save_dir).name == "评128-赞3560-测试标题-作者"
+        assert (Path(result.save_dir) / "封面-测试标题.jpg").is_file()
         copy_text = (Path(result.save_dir) / "文案.txt").read_text(encoding="utf-8-sig")
         assert "标题：测试标题" in copy_text and "正文：\n这是正文" in copy_text
         assert "#数码 #技巧" in copy_text

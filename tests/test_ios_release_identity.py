@@ -7,11 +7,11 @@ ROOT = Path(__file__).resolve().parents[1]
 IOS = ROOT / "ios"
 
 
-def test_ios_display_name_is_red_sweet_potato_download():
+def test_ios_display_name_is_xiaohongshu_douyin_download():
     with (IOS / "RedSweetPotatoDownload" / "Info.plist").open("rb") as stream:
         info = plistlib.load(stream)
 
-    assert info["CFBundleDisplayName"] == "红薯下载"
+    assert info["CFBundleDisplayName"] == "小红书抖音下载"
 
 
 def test_ios_bundle_id_is_unique_and_not_album_identity():
@@ -29,8 +29,31 @@ def test_ci_verifies_the_real_display_name_and_unique_bundle_id():
         encoding="utf-8"
     )
 
-    assert 'info["CFBundleDisplayName"] == "红薯下载"' in workflow
+    assert 'info["CFBundleDisplayName"] == "小红书抖音下载"' in workflow
     assert (
         'info["CFBundleIdentifier"] == "com.zwmopen.redsweetpotatodownload"'
         in workflow
     )
+
+
+def test_ios_douyin_parser_uses_nonpersistent_web_data():
+    parser = (
+        IOS / "RedSweetPotatoDownloadLegacy" / "DouyinParser.swift"
+    ).read_text(encoding="utf-8")
+    controller = (
+        IOS / "RedSweetPotatoDownloadLegacy" / "MainViewController.swift"
+    ).read_text(encoding="utf-8")
+
+    assert "configuration.websiteDataStore = .nonPersistent()" in parser
+    assert "PlatformRouter.platform(for: url)" in controller
+    assert "cookie" not in parser.lower()
+
+
+def test_ios_release_version_and_workflow_match():
+    project = (IOS / "project.yml").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "ios-build.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "MARKETING_VERSION: 0.2.0" in project
+    assert 'info["CFBundleShortVersionString"] == "0.2.0"' in workflow
