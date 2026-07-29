@@ -1,6 +1,6 @@
 # iPhone 真机验收清单
 
-- [x] GitHub macOS 15 / Xcode 16.4 无签名 iPhone Simulator 编译通过。
+- [x] GitHub macOS 15 / Xcode 16.4 模拟器、iPhoneOS Release 与未签名 IPA 结构校验通过（run 30440423591）。
 
 - [ ] Xcode Debug 构建无错误、无新增警告。
 - [ ] iPhone 安装启动，应用名和图标显示为“小红书抖音下载”。
