@@ -37,11 +37,23 @@ public final class NoteData {
     }
 
     public String mediaFileName(int index, MediaItem item, String imageFormat) {
-        boolean video = item.mimeType != null && item.mimeType.startsWith("video/");
-        String label = video ? "视频" : (index == 0 ? "封面" : "内页" + index);
+        boolean video = isVideo(item);
+        int sameKindBefore = 0;
+        for (int i = 0; i < Math.min(index, media.size()); i++) {
+            if (isVideo(media.get(i)) == video) sameKindBefore++;
+        }
+        String label = video
+                ? (sameKindBefore == 0 ? "视频" : "视频" + (sameKindBefore + 1))
+                : (sameKindBefore == 0 ? "封面" : "内页" + sameKindBefore);
         String extension = video || "keep".equals(imageFormat) ? item.extension : imageFormat;
         return label + "-" + safe(title.isEmpty() ? "未命名作品" : title, 64)
                 + "." + extension.replaceFirst("^\\.+", "").toLowerCase();
+    }
+
+    private static boolean isVideo(MediaItem item) {
+        return (item.mimeType != null && item.mimeType.startsWith("video/"))
+                || "mp4".equalsIgnoreCase(item.extension)
+                || "mov".equalsIgnoreCase(item.extension);
     }
 
     private static String safe(String value, int limit) {

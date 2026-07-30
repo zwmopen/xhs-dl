@@ -67,3 +67,11 @@ def test_legacy_client_has_cabled_real_device_diagnostics():
     assert "XHS_TEST_SETTINGS" in controller
     assert "XHS_TEST_URL" in controller
     assert "automation-result.json" in controller
+
+
+def test_legacy_downloads_large_media_to_temporary_files():
+    store = (LEGACY / "DownloadStore.swift").read_text(encoding="utf-8")
+
+    assert "URLSession.shared.downloadTask" in store
+    assert "服务器返回了网页而不是媒体文件" in store
+    assert '.appendingPathExtension("part")' in store

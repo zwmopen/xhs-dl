@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 import tempfile
 import json
 import threading
@@ -154,10 +155,6 @@ def test_web_job_api():
     from http.server import HTTPServer
     from xhs_dl.web import app
 
-    class FakeDownloader:
-        def __init__(self, **kwargs):
-            pass
-
     app.JOBS.clear()
     server = HTTPServer(("127.0.0.1", 0), app.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -180,8 +177,7 @@ def test_web_job_api():
             root + "/api/jobs", data=payload,
             headers={"Content-Type": "application/json"}, method="POST",
         )
-        with patch("xhs_dl.web.app.XhsV2Downloader", FakeDownloader), \
-                patch("xhs_dl.web.app.threading.Thread.start", return_value=None):
+        with patch("xhs_dl.web.app.threading.Thread.start", return_value=None):
             response = urlopen(request, timeout=5)
             created = json.loads(response.read().decode("utf-8"))
         assert response.status == 202
@@ -221,6 +217,56 @@ def test_desktop_theme_setting_is_persistent_and_validated():
         assert load_settings()["theme"] == "glass"
         save_settings({"output_dir": temp, "mode": "auto", "theme": "unknown"})
         assert load_settings()["theme"] == "neo"
+
+
+def test_invalid_persisted_settings_fall_back_without_crashing():
+    from xhs_dl.storage import load_settings, settings_path
+
+    with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"LOCALAPPDATA": temp}):
+        settings_path().write_text(
+            json.dumps({
+                "output_dir": ["not", "a", "path"],
+                "mode": "turbo",
+                "auto_update": "false",
+                "theme": "neon",
+                "image_format": "webp-only",
+            }),
+            encoding="utf-8",
+        )
+        settings = load_settings()
+        assert settings["output_dir"] == str(Path.home() / "Downloads")
+        assert settings["mode"] == "auto"
+        assert settings["auto_update"] is True
+        assert settings["theme"] == "neo"
+        assert settings["image_format"] == "jpg"
+
+
+def test_desktop_worker_delivers_background_exception_to_ui(monkeypatch, tmp_path):
+    from xhs_dl.desktop import app as desktop
+
+    class BrokenDownloader:
+        def __init__(self, **kwargs):
+            pass
+
+        def download(self, urls):
+            raise RuntimeError("可读错误")
+
+    class FakeApp:
+        settings = {"output_dir": str(tmp_path), "image_format": "jpg"}
+        received = ""
+
+        def after(self, delay, callback):
+            callback()
+
+        def _fail_download(self, message):
+            self.received = message
+
+    monkeypatch.setattr(desktop, "UnifiedDownloader", BrokenDownloader)
+    fake = FakeApp()
+
+    desktop.DesktopApp._download_worker(fake, ["https://v.douyin.com/test/"], "cautious")
+
+    assert fake.received == "可读错误"
 
 if __name__ == "__main__":
     test_extract_urls()

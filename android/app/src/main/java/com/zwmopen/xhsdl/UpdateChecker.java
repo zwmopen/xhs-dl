@@ -7,9 +7,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class UpdateChecker {
     private static final String RELEASES = "https://api.github.com/repos/zwmopen/xhs-dl/releases?per_page=20";
+    private static final Pattern ANDROID_ASSET = Pattern.compile("android-v(\\d+(?:\\.\\d+)+)\\.apk$", Pattern.CASE_INSENSITIVE);
 
     private UpdateChecker() {}
 
@@ -25,24 +28,30 @@ public final class UpdateChecker {
         } finally {
             connection.disconnect();
         }
-        JSONArray releases = new JSONArray(body.toString());
+        return fromReleases(body.toString());
+    }
+
+    static Result fromReleases(String json) throws Exception {
+        JSONArray releases = new JSONArray(json);
         for (int i = 0; i < releases.length(); i++) {
             JSONObject release = releases.optJSONObject(i);
-            if (release == null) continue;
-            String tag = release.optString("tag_name");
-            if (!tag.startsWith("android-v")) continue;
-            String latest = tag.substring("android-v".length());
+            if (release == null || release.optBoolean("draft") || release.optBoolean("prerelease")) continue;
+            String latest = "";
             String assetUrl = "";
             JSONArray assets = release.optJSONArray("assets");
             if (assets != null) {
                 for (int j = 0; j < assets.length(); j++) {
                     JSONObject asset = assets.optJSONObject(j);
-                    if (asset != null && asset.optString("name").endsWith(".apk")) {
+                    if (asset == null) continue;
+                    Matcher matcher = ANDROID_ASSET.matcher(asset.optString("name"));
+                    if (matcher.find()) {
+                        latest = matcher.group(1);
                         assetUrl = asset.optString("browser_download_url");
                         break;
                     }
                 }
             }
+            if (latest.isEmpty()) continue;
             return new Result(
                     BuildConfig.VERSION_NAME,
                     latest,

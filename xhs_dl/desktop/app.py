@@ -13,7 +13,7 @@ from xhs_dl import __version__
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
 from xhs_dl.core.v2_downloader import EngineNotReady
 from xhs_dl.core.unified_downloader import UnifiedDownloader
-from xhs_dl.storage import history_path, load_settings, save_settings
+from xhs_dl.storage import load_settings, save_settings
 
 
 RELEASE_API = "https://api.github.com/repos/zwmopen/xhs-dl/releases/latest"
@@ -434,9 +434,11 @@ class DesktopApp(ctk.CTk):
             result = downloader.download(urls)
             self.after(0, lambda: self._finish_download(result.success_count, result.fail_count))
         except EngineNotReady as exc:
-            self.after(0, lambda: self._fail_download(str(exc)))
+            message = str(exc)
+            self.after(0, lambda value=message: self._fail_download(value))
         except Exception as exc:
-            self.after(0, lambda: self._fail_download(str(exc)))
+            message = str(exc)
+            self.after(0, lambda value=message: self._fail_download(value))
 
     def _update_progress(self, index, total, lines):
         self.progress.stop()

@@ -57,7 +57,7 @@ def main():
     # 无参数启动（例如双击启动文件）时，进入一次粘贴输入模式。
     if not args.urls and not args.file:
         try:
-            pasted = input("请粘贴小红书分享文本或链接，然后按回车：\n> ").strip()
+            pasted = input("请粘贴小红书或抖音分享文本/链接，然后按回车：\n> ").strip()
         except (EOFError, KeyboardInterrupt):
             pasted = ""
         if pasted:
@@ -86,7 +86,8 @@ def main():
 
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
-    print("  小红书抖音下载 v2.5.0")
+    from xhs_dl import __version__
+    print(f"  小红书抖音下载 v{__version__}")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:

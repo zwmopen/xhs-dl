@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.5.0"
+    [string]$Version = "2.6.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +24,8 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
     --paths $ProjectRoot `
     --collect-all customtkinter `
     --collect-all playwright `
+    --exclude-module numpy `
+    --exclude-module pygame `
     --add-data "$(Join-Path $ProjectRoot 'xhs_dl\engine_bridge.py');xhs_dl" `
     --distpath $OutputRoot `
     --workpath (Join-Path $BuildRoot "work") `

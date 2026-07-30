@@ -12,15 +12,31 @@ final class UpdateChecker {
             if let error = error { completion(nil, nil, error); return }
             guard let data = data,
                   let releases = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
-                  let release = releases.first(where: { ($0["tag_name"] as? String)?.hasPrefix("ios-v") == true }),
-                  let tag = release["tag_name"] as? String,
-                  let page = release["html_url"] as? String,
-                  let pageURL = URL(string: page) else {
+                  let found = self.findIOSRelease(in: releases) else {
                 completion(nil, nil, URLError(.cannotParseResponse)); return
             }
-            let latest = String(tag.dropFirst("ios-v".count))
-            let available = latest.compare(current, options: .numeric) == .orderedDescending
-            completion(available ? latest : current, available ? pageURL : nil, nil)
+            let available = found.version.compare(current, options: .numeric) == .orderedDescending
+            completion(available ? found.version : current, available ? found.url : nil, nil)
         }.resume()
+    }
+
+    private func findIOSRelease(in releases: [[String: Any]]) -> (version: String, url: URL)? {
+        for release in releases {
+            if (release["draft"] as? Bool) == true || (release["prerelease"] as? Bool) == true { continue }
+            guard let assets = release["assets"] as? [[String: Any]] else { continue }
+            for asset in assets {
+                guard let name = asset["name"] as? String,
+                      let marker = name.range(of: "ios-v", options: .caseInsensitive),
+                      name.lowercased().hasSuffix(".ipa") else { continue }
+                let tail = name[marker.upperBound...]
+                let version = String(tail.split(separator: "-").first ?? "")
+                guard !version.isEmpty,
+                      version.split(separator: ".").allSatisfy({ Int($0) != nil }),
+                      let value = asset["browser_download_url"] as? String,
+                      let url = URL(string: value) else { continue }
+                return (version, url)
+            }
+        }
+        return nil
     }
 }

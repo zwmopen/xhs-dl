@@ -209,21 +209,41 @@ class DouyinBrowserEngine:
         return payload
 
     def _download_media(self, media, destination):
-        response = requests.get(
-            media.url,
-            timeout=75,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 Chrome/126 Safari/537.36"
-                ),
-                "Referer": "https://www.douyin.com/",
-            },
-        )
-        response.raise_for_status()
-        if len(response.content) < 200:
-            raise RuntimeError("抖音媒体返回内容过小")
-        destination.write_bytes(response.content)
+        destination = Path(destination)
+        partial = destination.with_name(destination.name + ".part")
+        response = None
+        size = 0
+        try:
+            response = requests.get(
+                media.url,
+                timeout=(20, 75),
+                stream=True,
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 Chrome/126 Safari/537.36"
+                    ),
+                    "Referer": "https://www.douyin.com/",
+                },
+            )
+            response.raise_for_status()
+            content_type = response.headers.get("Content-Type", "").lower()
+            if content_type.startswith(("text/", "application/json")):
+                raise RuntimeError("抖音返回了网页而不是媒体文件，请稍后重试")
+            with partial.open("wb") as stream:
+                for chunk in response.iter_content(chunk_size=128 * 1024):
+                    if chunk:
+                        stream.write(chunk)
+                        size += len(chunk)
+            if size < 200:
+                raise RuntimeError("抖音媒体返回内容过小")
+            partial.replace(destination)
+        except Exception:
+            partial.unlink(missing_ok=True)
+            raise
+        finally:
+            if response is not None:
+                response.close()
         if media.kind != "video" and self.image_format != "keep":
             return convert_image_file(destination, self.image_format)
         return destination

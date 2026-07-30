@@ -143,3 +143,34 @@ def test_unified_downloader_routes_mixed_links_in_input_order(tmp_path):
         ("xhs", urls[1]),
     ]
     assert progress == [("douyin", 1, 2), ("xhs", 2, 2)]
+
+
+def test_douyin_media_download_streams_atomically_and_rejects_html(tmp_path, monkeypatch):
+    from xhs_dl.core.douyin_downloader import DouyinBrowserEngine, DouyinMedia
+
+    class FakeResponse:
+        headers = {"Content-Type": "text/html; charset=utf-8"}
+
+        def raise_for_status(self):
+            return None
+
+        def iter_content(self, chunk_size):
+            yield b"<html>blocked</html>" * 20
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr("xhs_dl.core.douyin_downloader.requests.get", lambda *a, **k: FakeResponse())
+    destination = tmp_path / "封面.jpg"
+
+    try:
+        DouyinBrowserEngine()._download_media(
+            DouyinMedia("https://example/media", "image", "jpg"), destination
+        )
+    except RuntimeError as error:
+        assert "网页而不是媒体" in str(error)
+    else:
+        raise AssertionError("HTML error page must not be saved as media")
+
+    assert not destination.exists()
+    assert not (tmp_path / "封面.jpg.part").exists()

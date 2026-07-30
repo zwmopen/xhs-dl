@@ -7,6 +7,8 @@ from pathlib import Path
 
 
 _LOCK = threading.Lock()
+_MODES = {"auto", "fast", "normal", "cautious", "slow", "very-slow"}
+_FORMATS = {"jpg", "png", "keep"}
 
 
 def app_data_dir():
@@ -72,19 +74,28 @@ def load_settings():
         value = _read_json(settings_path(), {})
     if isinstance(value, dict):
         defaults.update(value)
-    return defaults
+    return _normalize_settings(defaults)
+
+
+def _normalize_settings(value):
+    output_dir = value.get("output_dir")
+    if not isinstance(output_dir, str) or not output_dir.strip():
+        output_dir = str(Path.home() / "Downloads")
+    mode = value.get("mode")
+    image_format = value.get("image_format")
+    return {
+        "output_dir": output_dir,
+        "mode": mode if mode in _MODES else "auto",
+        "auto_update": value.get("auto_update")
+        if isinstance(value.get("auto_update"), bool)
+        else True,
+        "theme": "glass" if value.get("theme") == "glass" else "neo",
+        "image_format": image_format if image_format in _FORMATS else "jpg",
+    }
 
 
 def save_settings(value):
-    allowed = {
-        "output_dir": value.get("output_dir") or str(Path.home() / "Downloads"),
-        "mode": value.get("mode", "auto"),
-        "auto_update": bool(value.get("auto_update", True)),
-        "theme": "glass" if value.get("theme") == "glass" else "neo",
-        "image_format": value.get("image_format")
-        if value.get("image_format") in {"jpg", "png", "keep"}
-        else "jpg",
-    }
+    allowed = _normalize_settings(value if isinstance(value, dict) else {})
     with _LOCK:
         _write_json(settings_path(), allowed)
     return allowed

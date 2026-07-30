@@ -80,15 +80,27 @@ final class DownloadStore {
         var request = URLRequest(url: item.url, timeoutInterval: 75)
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 12_5 like Mac OS X)", forHTTPHeaderField: "User-Agent")
         request.setValue(referer, forHTTPHeaderField: "Referer")
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        URLSession.shared.downloadTask(with: request) { temporaryURL, response, error in
             if let error = error { completion(error); return }
             if let http = response as? HTTPURLResponse, !(200..<400).contains(http.statusCode) {
                 completion(URLError(.badServerResponse)); return
             }
-            guard var data = data else { completion(URLError(.zeroByteResource)); return }
+            if let mime = response?.mimeType?.lowercased(), mime.hasPrefix("text/") || mime == "application/json" {
+                completion(AppFailure.storage("服务器返回了网页而不是媒体文件")); return
+            }
+            guard let temporaryURL = temporaryURL else { completion(URLError(.zeroByteResource)); return }
             do {
+                let values = try temporaryURL.resourceValues(forKeys: [.fileSizeKey])
+                guard (values.fileSize ?? 0) >= 200 else { throw URLError(.zeroByteResource) }
                 let video = ["mp4", "mov"].contains(item.fileExtension.lowercased())
-                if !video && imageFormat != "keep" {
+                if video {
+                    let staging = destination.appendingPathExtension("part")
+                    try? FileManager.default.removeItem(at: staging)
+                    try FileManager.default.moveItem(at: temporaryURL, to: staging)
+                    try FileManager.default.moveItem(at: staging, to: destination)
+                } else {
+                    var data = try Data(contentsOf: temporaryURL)
+                    if imageFormat != "keep" {
                     guard let image = UIImage(data: data) else { throw AppFailure.storage("图片格式解析失败") }
                     if imageFormat == "png" {
                         guard let converted = image.pngData() else { throw AppFailure.storage("PNG 转码失败") }
@@ -97,8 +109,9 @@ final class DownloadStore {
                         guard let converted = image.jpegData(compressionQuality: 0.95) else { throw AppFailure.storage("JPG 转码失败") }
                         data = converted
                     }
+                    }
+                    try data.write(to: destination, options: .atomic)
                 }
-                try data.write(to: destination, options: .atomic)
                 DispatchQueue.main.async { progress(index + 1, media.count) }
                 self.download(media, index: index + 1, folder: folder, referer: referer, note: note, imageFormat: imageFormat, progress: progress, completion: completion)
             } catch {

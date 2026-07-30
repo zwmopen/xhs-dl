@@ -31,10 +31,6 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -392,51 +388,21 @@ public final class MainActivity extends Activity {
 
     private void checkUpdate() {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL("https://api.github.com/repos/zwmopen/xhs-dl/releases?per_page=20").openConnection();
-            connection.setConnectTimeout(6000);
-            connection.setReadTimeout(6000);
-            connection.setRequestProperty("User-Agent", "xhs-dl-android");
-            StringBuilder body = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) body.append(line);
-            }
-            JSONArray releases = new JSONArray(body.toString());
-            for (int i = 0; i < releases.length(); i++) {
-                JSONObject release = releases.optJSONObject(i);
-                if (release == null) continue;
-                String tag = release.optString("tag_name");
-                if (!tag.startsWith("android-v")) continue;
-                if (compareVersion(tag.substring("android-v".length()), BuildConfig.VERSION_NAME) > 0) {
-                    String page = release.optString("html_url");
-                    handler.post(() -> {
-                        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("发现安卓新版本 " + tag)
-                            .setMessage("是否打开正式发布页？")
-                            .setNegativeButton("稍后", null)
-                            .setPositiveButton("打开", (d, w) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(page)))).create();
-                        presentDialog(dialog);
-                    });
-                }
-                break;
+            UpdateChecker.Result result = UpdateChecker.checkAndroid();
+            if (result.updateAvailable) {
+                handler.post(() -> {
+                    AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle("发现安卓新版本 " + result.latestVersion)
+                        .setMessage("是否打开正式安装包？")
+                        .setNegativeButton("稍后", null)
+                        .setPositiveButton("打开", (d, w) -> startActivity(new Intent(
+                                Intent.ACTION_VIEW, Uri.parse(result.apkUrl.isEmpty() ? result.releaseUrl : result.apkUrl))))
+                        .create();
+                    presentDialog(dialog);
+                });
             }
         } catch (Exception ignored) {
         }
-    }
-
-    private static int compareVersion(String left, String right) {
-        String[] a = left.split("\\.");
-        String[] b = right.split("\\.");
-        for (int i = 0; i < Math.max(a.length, b.length); i++) {
-            int x = i < a.length ? number(a[i]) : 0;
-            int y = i < b.length ? number(b[i]) : 0;
-            if (x != y) return Integer.compare(x, y);
-        }
-        return 0;
-    }
-
-    private static int number(String value) {
-        try { return Integer.parseInt(value.replaceAll("\\D", "")); }
-        catch (Exception ignored) { return 0; }
     }
 
     private void presentDialog(AlertDialog dialog) {

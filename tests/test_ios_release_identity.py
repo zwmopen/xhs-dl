@@ -55,5 +55,15 @@ def test_ios_release_version_and_workflow_match():
         encoding="utf-8"
     )
 
-    assert "MARKETING_VERSION: 0.2.0" in project
-    assert 'info["CFBundleShortVersionString"] == "0.2.0"' in workflow
+    assert "MARKETING_VERSION: 0.3.0" in project
+    assert 'info["CFBundleShortVersionString"] == "0.3.0"' in workflow
+
+
+def test_ios_update_checker_finds_ipa_inside_unified_product_release():
+    legacy = (IOS / "RedSweetPotatoDownloadLegacy" / "UpdateChecker.swift").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'range(of: "ios-v"' in legacy
+    assert 'hasSuffix(".ipa")' in legacy
+    assert 'hasPrefix("ios-v")' not in legacy

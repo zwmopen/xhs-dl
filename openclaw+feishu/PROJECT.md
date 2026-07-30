@@ -2,12 +2,11 @@
 
 ## 当前版本
 
-- 当前交付：Windows V2.4.0、Android V1.1.0、iPhone V0.1.0 源码预览
+- 当前交付：Windows V2.6.0、Android V1.3.0、iPhone V0.3.0；三端均支持小红书与抖音公开作品
 - 仓库：`https://github.com/zwmopen/xhs-dl`
 - 上一发布：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.3.0`
 - Windows 发布：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.4.0`
-- Android 发布：`https://github.com/zwmopen/xhs-dl/releases/tag/android-v1.1.0`
-- iPhone 源码预览：`https://github.com/zwmopen/xhs-dl/releases/tag/ios-v0.1.0`
+- 三端统一发布：`https://github.com/zwmopen/xhs-dl/releases/latest`
 - 上一稳定备份：`https://github.com/zwmopen/xhs-dl/releases/tag/v2.2.1`
 - 本地项目：`D:\AICode\工具开发\projects\xhs-dl`
 - 本地引擎：`D:\AICode\工具开发\projects\XHS_Downloader`

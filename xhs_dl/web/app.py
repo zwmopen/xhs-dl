@@ -10,7 +10,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
-from xhs_dl.core.v2_downloader import XhsV2Downloader, EngineNotReady
+from xhs_dl import __version__
+from xhs_dl.core.unified_downloader import UnifiedDownloader
 
 
 JOBS = {}
@@ -75,7 +76,7 @@ textarea::placeholder,input::placeholder{color:#8092a2}
 .advanced{margin-top:15px;border:1px solid var(--line);border-radius:14px;background:var(--soft);overflow:hidden}
 .advanced summary{padding:12px 14px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;list-style:none;user-select:none}
 .advanced summary::-webkit-details-marker{display:none}.advanced summary:after{content:"＋";float:right;font-size:15px;line-height:1}.advanced[open] summary:after{content:"－"}
-.settings{display:grid;grid-template-columns:1fr 160px;gap:14px;padding:2px 14px 14px}
+.settings{display:grid;grid-template-columns:minmax(220px,1fr) 160px 190px;gap:14px;padding:2px 14px 14px}
 .primary{width:100%;height:52px;margin-top:20px;border:0;border-radius:16px;background:var(--primary);color:#f7fafc;font-size:15px;font-weight:800;letter-spacing:.04em;cursor:pointer;box-shadow:0 10px 22px rgba(38,52,66,.2);transition:background var(--ease),transform var(--ease),box-shadow var(--ease)}
 .primary:hover{background:var(--primary-hover);transform:translateY(-1px);box-shadow:0 12px 26px rgba(38,52,66,.25)}
 .primary:active{transform:translateY(1px);box-shadow:0 5px 12px rgba(38,52,66,.22)}
@@ -114,19 +115,20 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 <body data-theme="neo">
 <main class="shell">
   <header class="topbar">
-    <div class="brand"><div class="mark">x·</div><div><h1>xhs-dl</h1><p>公开笔记原始媒体 · 本地保存 · 无需登录</p></div></div>
+    <div class="brand"><div class="mark">x·</div><div><h1>小红书抖音下载</h1><p>公开作品原始媒体 · 本地保存 · 无需登录</p></div></div>
     <button class="theme-switch" id="themeButton" type="button" aria-label="切换视觉主题">克制玻璃</button>
   </header>
   <section class="workspace">
     <div class="surface">
       <div class="eyebrow">Original media</div>
       <h2>粘贴链接，保存原图。</h2>
-      <p class="lead">复制小红书分享内容到下面，点一次即可。默认保存到电脑的“下载”文件夹。</p>
+      <p class="lead">复制小红书或抖音分享内容到下面，点一次即可。默认保存到电脑的“下载”文件夹。</p>
       <label for="input">分享文本或链接</label>
-      <textarea id="input" placeholder="例如：复制小红书分享文本到这里，也可以一次粘贴多条链接。"></textarea>
+      <textarea id="input" placeholder="例如：复制小红书或抖音分享文本到这里，也可以一次粘贴多条链接。"></textarea>
       <details class="advanced"><summary>保存位置和速度</summary><div class="settings">
         <div><label for="outdir">保存位置</label><input id="outdir" type="text"></div>
-        <div><label for="mode">下载节奏</label><select id="mode"><option value="fast">快速 · 3–8 秒</option><option value="normal">标准 · 8–15 秒</option><option value="cautious" selected>保守 · 25–45 秒</option><option value="slow">慢速 · 55–85 秒</option><option value="very-slow">极慢 · 110–160 秒</option></select></div>
+        <div><label for="mode">下载节奏</label><select id="mode"><option value="fast">快速 · 3–8 秒</option><option value="normal">标准 · 8–15 秒</option><option value="cautious" selected>稳妥 · 35–55 秒</option><option value="slow">慢速 · 55–85 秒</option><option value="very-slow">极慢 · 110–160 秒</option></select></div>
+        <div><label for="format">图片格式</label><select id="format"><option value="jpg" selected>JPG（推荐）</option><option value="png">PNG（无损）</option><option value="keep">保持原格式</option></select></div>
       </div></details>
       <button class="primary" id="go" type="button">开始下载</button>
       <div class="privacy"><span class="shield">✓</span><span>公开笔记无需账号、密码或 Cookie。链接默认只交给本机引擎，不会静默发送到在线解析网站。</span></div>
@@ -138,23 +140,23 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
       <div class="results" id="results"></div>
     </aside>
   </section>
-  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · 小红书抖音下载 V2.4.0</p>
+  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · 小红书抖音下载 V__APP_VERSION__</p>
 </main>
 <script>
-const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode',DEFAULT_OUTPUT=__DEFAULT_OUTPUT_JSON__,MIN_PROGRESS_MS=1100;
+const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode',FORMAT_KEY='xhs-dl-format',DEFAULT_OUTPUT=__DEFAULT_OUTPUT_JSON__,MIN_PROGRESS_MS=1100;
 const $=id=>document.getElementById(id);let activeJob=null,pollTimer=null,jobStartedAt=0;
 function applyTheme(theme){const next=theme==='glass'?'glass':'neo';document.body.dataset.theme=next;localStorage.setItem(THEME_KEY,next);$('themeButton').textContent=next==='neo'?'克制玻璃':'拟态悬浮'}
 applyTheme(localStorage.getItem(THEME_KEY)||'neo');
 $('themeButton').addEventListener('click',()=>applyTheme(document.body.dataset.theme==='neo'?'glass':'neo'));
-$('outdir').value=localStorage.getItem(OUTPUT_KEY)||DEFAULT_OUTPUT;$('mode').value=localStorage.getItem(MODE_KEY)||'cautious';
-$('outdir').addEventListener('change',e=>localStorage.setItem(OUTPUT_KEY,e.target.value.trim()));$('mode').addEventListener('change',e=>localStorage.setItem(MODE_KEY,e.target.value));
+$('outdir').value=localStorage.getItem(OUTPUT_KEY)||DEFAULT_OUTPUT;$('mode').value=localStorage.getItem(MODE_KEY)||'cautious';$('format').value=localStorage.getItem(FORMAT_KEY)||'jpg';
+$('outdir').addEventListener('change',e=>localStorage.setItem(OUTPUT_KEY,e.target.value.trim()));$('mode').addEventListener('change',e=>localStorage.setItem(MODE_KEY,e.target.value));$('format').addEventListener('change',e=>localStorage.setItem(FORMAT_KEY,e.target.value));
 function setState(status,title,sub){$('stateDot').className='state-dot '+status;$('statusTitle').textContent=title;$('statusSub').textContent=sub}
 function render(job){const total=job.total||0,done=job.done||0,success=job.success||0,running=job.status==='running'||job.status==='queued';$('progressBar').classList.toggle('active',running&&done===0);if(!(running&&done===0)){$('progressBar').style.transform='none';$('progressBar').style.width=(total?Math.round(done/total*100):0)+'%'}$('progressText').textContent=`${done} / ${total}`;$('successText').textContent=`成功 ${success}`;
   const items=job.items||[];$('empty').style.display=items.length?'none':'block';$('results').classList.toggle('show',items.length>0);$('results').innerHTML='';items.forEach(it=>{const d=document.createElement('div');d.className='result '+(it.success?'ok':'fail');const top=document.createElement('div');top.className='result-top';const name=document.createElement('span');name.className='result-name';name.textContent=it.title||it.error||'未命名笔记';const count=document.createElement('span');count.className='result-count';count.textContent=it.success?`${it.image_success||0} 张`:'失败';top.append(name,count);d.append(top);if(!it.success&&it.error){const err=document.createElement('div');err.className='result-error';err.textContent=it.error;d.append(err)}$('results').append(d)});
   if(job.status==='running'||job.status==='queued')setState('running','正在逐条提取',total?`已完成 ${done} 条，共 ${total} 条`:'正在准备本地引擎');else if(job.status==='completed')setState(job.failed?'error':'done',job.failed?'任务完成，有失败项':'全部保存完成',`成功 ${job.success||0} 条，失败 ${job.failed||0} 条`);else if(job.status==='error')setState('error','任务没有完成',job.error||'请稍后重试')}
 function finish(){activeJob=null;$('go').disabled=false;$('go').textContent='开始下载'}
 async function poll(){if(!activeJob)return;try{const r=await fetch('/api/jobs/'+activeJob);const job=await r.json();if(!r.ok)throw new Error(job.error||'读取任务失败');if(job.status==='completed'||job.status==='error'){const wait=Math.max(0,MIN_PROGRESS_MS-(Date.now()-jobStartedAt));if(wait){pollTimer=setTimeout(()=>{render(job);finish()},wait);return}render(job);finish();return}render(job);pollTimer=setTimeout(poll,700)}catch(e){setState('error','连接中断',e.message);$('progressBar').classList.remove('active');$('go').disabled=false;$('go').textContent='重新开始';activeJob=null}}
-async function start(){if(activeJob)return;const text=$('input').value.trim();if(!text){$('input').focus();setState('error','还缺少分享文本','请先粘贴至少一条小红书链接');return}const output_dir=$('outdir').value.trim()||DEFAULT_OUTPUT,mode=$('mode').value;localStorage.setItem(OUTPUT_KEY,output_dir);localStorage.setItem(MODE_KEY,mode);jobStartedAt=Date.now();$('go').disabled=true;$('go').textContent='正在准备…';$('progressBar').classList.add('active');$('progressBar').style.width='38%';$('progressText').textContent='准备中';$('successText').textContent='';$('results').innerHTML='';$('results').classList.remove('show');$('empty').style.display='block';setState('running','正在准备','连接本地无水印引擎');try{const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,output_dir,mode})});const data=await r.json();if(!r.ok)throw new Error(data.error||'创建任务失败');activeJob=data.job_id;$('go').textContent='下载进行中';poll()}catch(e){$('progressBar').classList.remove('active');setState('error','无法开始',e.message);$('go').disabled=false;$('go').textContent='重新开始'}}
+async function start(){if(activeJob)return;const text=$('input').value.trim();if(!text){$('input').focus();setState('error','还缺少分享文本','请先粘贴至少一条小红书或抖音链接');return}const output_dir=$('outdir').value.trim()||DEFAULT_OUTPUT,mode=$('mode').value,image_format=$('format').value;localStorage.setItem(OUTPUT_KEY,output_dir);localStorage.setItem(MODE_KEY,mode);localStorage.setItem(FORMAT_KEY,image_format);jobStartedAt=Date.now();$('go').disabled=true;$('go').textContent='正在准备…';$('progressBar').classList.add('active');$('progressBar').style.width='38%';$('progressText').textContent='准备中';$('successText').textContent='';$('results').innerHTML='';$('results').classList.remove('show');$('empty').style.display='block';setState('running','正在准备','连接本地无水印引擎');try{const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,output_dir,mode,image_format})});const data=await r.json();if(!r.ok)throw new Error(data.error||'创建任务失败');activeJob=data.job_id;$('go').textContent='下载进行中';poll()}catch(e){$('progressBar').classList.remove('active');setState('error','无法开始',e.message);$('go').disabled=false;$('go').textContent='重新开始'}}
 $('go').addEventListener('click',start);$('input').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')start()});
 </script>
 </body>
@@ -179,7 +181,7 @@ def _update_job(job_id, **values):
             JOBS[job_id].update(values)
 
 
-def _run_job(job_id, urls, output_dir, delay):
+def _run_job(job_id, urls, output_dir, delay, image_format):
     _update_job(job_id, status="running")
 
     def on_progress(item, index, total):
@@ -191,10 +193,11 @@ def _run_job(job_id, urls, output_dir, delay):
             job["failed"] = index - job["success"]
 
     try:
-        downloader = XhsV2Downloader(
+        downloader = UnifiedDownloader(
             output_dir=output_dir,
             delay=delay,
             on_progress=on_progress,
+            image_format=image_format,
         )
         result = downloader.download(urls)
         _update_job(
@@ -217,7 +220,7 @@ class Handler(BaseHTTPRequestHandler):
             html = TEMPLATE.replace(
                 "__DEFAULT_OUTPUT_JSON__",
                 json.dumps(DEFAULT_OUTPUT_DIR, ensure_ascii=False),
-            )
+            ).replace("__APP_VERSION__", __version__)
             self._html(html)
             return
         if self.path.startswith("/api/jobs/"):
@@ -237,6 +240,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", 0))
+            if length > 1024 * 1024:
+                self._json({"error": "粘贴内容过大，请分批处理"}, 413)
+                return
             body = json.loads(self.rfile.read(length) or b"{}")
         except (ValueError, json.JSONDecodeError):
             self._json({"error": "请求格式无效"}, 400)
@@ -248,12 +254,14 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": "未检测到有效链接"}, 400)
             return
         output_dir = body.get("output_dir") or DEFAULT_OUTPUT_DIR
+        if not isinstance(output_dir, str):
+            self._json({"error": "保存位置格式无效"}, 400)
+            return
         mode = body.get("mode", "cautious")
         delay = DELAY_MODES.get(mode, DELAY_MODES["cautious"])
-        try:
-            XhsV2Downloader(output_dir=output_dir, delay=delay)
-        except EngineNotReady as exc:
-            self._json({"error": str(exc)}, 503)
+        image_format = body.get("image_format", "jpg")
+        if image_format not in {"jpg", "png", "keep"}:
+            self._json({"error": "图片格式无效"}, 400)
             return
 
         job_id = uuid.uuid4().hex
@@ -275,7 +283,7 @@ class Handler(BaseHTTPRequestHandler):
             }
         worker = threading.Thread(
             target=_run_job,
-            args=(job_id, urls, output_dir, delay),
+            args=(job_id, urls, output_dir, delay, image_format),
             daemon=True,
         )
         worker.start()
@@ -308,7 +316,7 @@ def main():
     port = 5678
     server = HTTPServer((host, port), Handler)
     url = "http://{}:{}".format(host, port)
-    print("小红书抖音下载 V2.4.0 Web: {}".format(url))
+    print("小红书抖音下载 V{} Web: {}".format(__version__, url))
     print("Press Ctrl+C to stop")
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:

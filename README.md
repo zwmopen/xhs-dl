@@ -27,7 +27,7 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
 
-推荐使用 V2.5.0 便携桌面版：解压 `小红书抖音下载-v2.5.0-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态。
+推荐使用 V2.6.0 便携桌面版：解压 `小红书抖音下载-v2.6.0-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态。
 
 在 PowerShell 中运行：
 
@@ -74,13 +74,13 @@ xhs-dl-web
 
 ## Android 应用
 
-安装发布页中的 `小红书抖音下载-android-v1.1.0.apk`。可以手动粘贴分享文字，也可以在其他应用中点“分享”并选择“小红书抖音下载”。新安装默认保存到手机 `Download/小红书抖音下载`；设置中既能修改默认子目录，也能用 Android 系统文件夹选择器授权任意可写目录。升级用户会保留旧目录设置。
+安装发布页中的 `小红书抖音下载-android-v1.3.0.apk`。可以手动粘贴分享文字，也可以在其他应用中点“分享”并选择“小红书抖音下载”。新安装默认保存到手机 `Download/小红书抖音下载`；设置中既能修改默认子目录，也能用 Android 系统文件夹选择器授权任意可写目录。升级用户会保留旧目录设置。
 
 安卓端与电脑端使用同名的“拟态悬浮 / 克制玻璃”双主题，并记住主题、下载子目录、自动频率和更新检测设置。Android 10 及以上使用系统 MediaStore 保存，不需要索取全部文件权限。
 
 ## iPhone 应用
 
-`ios/` 提供小红书抖音下载 iOS V0.1.0 SwiftUI 客户端。默认保存到“文件”App 可见的 `小红书抖音下载` 目录，也可以通过系统目录选择器改到“我的 iPhone”或 iCloud Drive 中用户授权的文件夹。iOS 设置页包含主题、下载目录、设计说明、使用说明和手动更新检测。
+`ios/` 提供小红书抖音下载 iOS V0.3.0 客户端，当前发布目标兼容 iOS 12 / iPhone 6。默认保存到“文件”App 可见的 `小红书抖音下载` 目录，也可以通过系统目录选择器改到“我的 iPhone”或 iCloud Drive 中用户授权的文件夹。iOS 设置页包含主题、下载目录、设计说明、使用说明和手动更新检测。
 
 iPhone 版与另外两端相互独立，不上传下载历史。仓库使用 GitHub macOS 构建机做无签名模拟器编译；安装到真机仍需用户自己的 Apple 开发签名，详见 `ios/README.md`。
 
@@ -89,12 +89,12 @@ iPhone 版与另外两端相互独立，不上传下载历史。仓库使用 Git
 ```text
 xhs_downloads/
 └── 评128-赞3560-标题-作者/
-    ├── 图片_1.png
-    ├── 图片_2.png
+    ├── 封面-标题.jpg
+    ├── 内页1-标题.jpg
     └── 文案.txt
 ```
 
-所有成功历史集中保存在 `%LOCALAPPDATA%\xhs-dl\history.json`。
+所有成功历史集中保存在 `%LOCALAPPDATA%\xhs-dl\history.json`。源码运行要求 Python 3.9 及以上；Windows 便携版无需自行配置 Python。
 
 模板配置保存在 `templates/local-cli.json`。可用环境变量 `XHS_DOWNLOADER_HOME` 覆盖引擎位置。
 

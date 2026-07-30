@@ -14,15 +14,30 @@ struct UpdateChecker {
         request.setValue("red-sweet-potato-download-ios", forHTTPHeaderField: "User-Agent")
         let (data, _) = try await URLSession.shared.data(for: request)
         let releases = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] ?? []
-        guard let release = releases.first(where: { ($0["tag_name"] as? String)?.hasPrefix("ios-v") == true }),
-              let tag = release["tag_name"] as? String,
-              let page = release["html_url"] as? String,
-              let releaseURL = URL(string: page) else {
+        guard let found = findIOSRelease(in: releases) else {
             throw URLError(.cannotParseResponse)
         }
-        let latest = String(tag.dropFirst("ios-v".count))
         let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
-        return UpdateResult(current: current, latest: latest, available: compare(latest, current) == .orderedDescending, releaseURL: releaseURL)
+        return UpdateResult(current: current, latest: found.version, available: compare(found.version, current) == .orderedDescending, releaseURL: found.url)
+    }
+
+    private func findIOSRelease(in releases: [[String: Any]]) -> (version: String, url: URL)? {
+        for release in releases {
+            if (release["draft"] as? Bool) == true || (release["prerelease"] as? Bool) == true { continue }
+            guard let assets = release["assets"] as? [[String: Any]] else { continue }
+            for asset in assets {
+                guard let name = asset["name"] as? String,
+                      let marker = name.range(of: "ios-v", options: .caseInsensitive),
+                      name.lowercased().hasSuffix(".ipa") else { continue }
+                let version = String(name[marker.upperBound...].split(separator: "-").first ?? "")
+                guard !version.isEmpty,
+                      version.split(separator: ".").allSatisfy({ Int($0) != nil }),
+                      let value = asset["browser_download_url"] as? String,
+                      let url = URL(string: value) else { continue }
+                return (version, url)
+            }
+        }
+        return nil
     }
 
     private func compare(_ left: String, _ right: String) -> ComparisonResult {

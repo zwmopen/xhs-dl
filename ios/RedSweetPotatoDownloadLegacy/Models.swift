@@ -40,7 +40,12 @@ struct NoteData {
 
     func mediaFileName(index: Int, item: MediaItem, imageFormat: String) -> String {
         let video = ["mp4", "mov"].contains(item.fileExtension.lowercased())
-        let label = video ? "视频" : (index == 0 ? "封面" : "内页\(index)")
+        let sameKindBefore = media.prefix(index).filter {
+            ["mp4", "mov"].contains($0.fileExtension.lowercased()) == video
+        }.count
+        let label = video
+            ? (sameKindBefore == 0 ? "视频" : "视频\(sameKindBefore + 1)")
+            : (sameKindBefore == 0 ? "封面" : "内页\(sameKindBefore)")
         let ext = video || imageFormat == "keep" ? item.fileExtension : imageFormat
         return "\(label)-\(safe(title.isEmpty ? "未命名作品" : title, limit: 64)).\(ext.lowercased())"
     }

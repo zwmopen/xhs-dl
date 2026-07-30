@@ -11,7 +11,10 @@ def safe_title(value, limit=64):
 
 def media_filename(index, title, extension, is_video=False):
     extension = "." + str(extension or "").lstrip(".").lower()
-    label = "视频" if is_video else ("封面" if index == 0 else f"内页{index}")
+    if is_video:
+        label = "视频" if index == 0 else f"视频{index + 1}"
+    else:
+        label = "封面" if index == 0 else f"内页{index}"
     return f"{label}-{safe_title(title)}{extension}"
 
 

@@ -15,8 +15,11 @@ import json
 import time
 import random
 import logging
-from typing import List, Tuple, Optional, Callable
+from typing import TYPE_CHECKING, List, Tuple, Optional, Callable
 from pathlib import Path
+
+if TYPE_CHECKING:
+    from .models import DownloadResult
 
 import requests
 

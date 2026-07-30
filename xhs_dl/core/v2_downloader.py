@@ -246,23 +246,23 @@ class LocalCliEngine:
     @staticmethod
     def _rename_media_files(files: List[Path], title: str, image_format: str = "jpg") -> List[Path]:
         renamed = []
-        for index, path in enumerate(sorted(files)):
-            is_video = path.suffix.lower() in VIDEO_EXTENSIONS
-            if not is_video:
-                path = convert_image_file(path, image_format)
+        ordered = sorted(files)
+        images = [path for path in ordered if path.suffix.lower() not in VIDEO_EXTENSIONS]
+        videos = [path for path in ordered if path.suffix.lower() in VIDEO_EXTENSIONS]
+        for index, path in enumerate(images):
+            path = convert_image_file(path, image_format)
             target = path.with_name(
-                media_filename(
-                    index,
-                    title,
-                    path.suffix,
-                    is_video=is_video,
-                )
+                media_filename(index, title, path.suffix, is_video=False)
             )
             if target != path:
-                if target.exists():
-                    path.unlink()
-                else:
-                    path.rename(target)
+                path.replace(target)
+            renamed.append(target)
+        for index, path in enumerate(videos):
+            target = path.with_name(
+                media_filename(index, title, path.suffix, is_video=True)
+            )
+            if target != path:
+                path.replace(target)
             renamed.append(target)
         return renamed
 
