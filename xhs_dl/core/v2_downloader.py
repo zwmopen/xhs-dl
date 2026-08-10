@@ -76,6 +76,19 @@ class LocalCliEngine:
         )
 
     @staticmethod
+    def _subprocess_environment(engine_home: Path) -> dict:
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(engine_home)
+        for key, value in list(environment.items()):
+            if key.lower() != "no_proxy":
+                continue
+            # httpx 0.28 treats bare IPv6 NO_PROXY entries such as ::1 as
+            # host:port patterns and raises InvalidURL before making a request.
+            entries = [item.strip() for item in value.split(",") if item.strip()]
+            environment[key] = ",".join(item for item in entries if item.count(":") < 2)
+        return environment
+
+    @staticmethod
     def _media_files(root: Path) -> dict:
         if not root.exists():
             return {}
@@ -97,8 +110,7 @@ class LocalCliEngine:
             "--work-path", str(output_dir.parent),
             "--folder-name", output_dir.name,
         ]
-        environment = os.environ.copy()
-        environment["PYTHONPATH"] = str(self.home)
+        environment = self._subprocess_environment(self.home)
         try:
             completed = subprocess.run(
                 command,
@@ -268,7 +280,11 @@ class LocalCliEngine:
 
     @staticmethod
     def _last_useful_line(text: str) -> str:
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        lines = [
+            line.strip()
+            for line in text.splitlines()
+            if line.strip() and not line.strip().startswith(METADATA_MARKER)
+        ]
         return lines[-1][:300] if lines else ""
 
     @staticmethod

@@ -132,7 +132,6 @@ def test_v2_local_cli_adapter():
         assert not list(output.rglob("*.db"))
         history = json.loads((root / "appdata" / "xhs-dl" / "history.json").read_text("utf-8"))
         assert history == [{"下载网址": "http://xhslink.com/o/test", "笔记ID": result.note_id, "标题": "测试标题"}]
-
         def fake_skip(command, **kwargs):
             return SimpleNamespace(
                 returncode=0,
@@ -149,6 +148,27 @@ def test_v2_local_cli_adapter():
             repeated = engine.download_one("http://xhslink.com/o/test", output)
         assert repeated.success and repeated.image_count == 1
     print("v2_local_cli_adapter: PASS")
+
+
+def test_v2_subprocess_environment_removes_httpx_invalid_ipv6_no_proxy():
+    """httpx 0.28 cannot parse bare IPv6 entries inherited through NO_PROXY."""
+    from xhs_dl.core.v2_downloader import LocalCliEngine
+
+    value = "127.0.0.1,localhost,::1,127.0.0.0/8,::1/128,example.com"
+    with patch.dict(os.environ, {"NO_PROXY": value}, clear=False):
+        environment = LocalCliEngine._subprocess_environment(Path("D:/engine"))
+
+    no_proxy = next(
+        item for key, item in environment.items() if key.lower() == "no_proxy"
+    )
+    assert no_proxy == "127.0.0.1,localhost,127.0.0.0/8,example.com"
+
+
+def test_v2_error_detail_does_not_expose_empty_metadata_marker():
+    from xhs_dl.core.v2_downloader import LocalCliEngine
+
+    output = "请求未返回公开作品数据\n__XHS_DL_METADATA__{}\n"
+    assert LocalCliEngine._last_useful_line(output) == "请求未返回公开作品数据"
 
 def test_web_job_api():
     """验证可视化界面的后台任务创建与轮询协议。"""

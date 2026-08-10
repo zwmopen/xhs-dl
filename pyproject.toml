@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "2.6.0"
+version = "2.6.1"
 description = "小红书抖音下载 - 本地小红书与抖音原始媒体下载器"
 readme = "README.md"
 requires-python = ">=3.9"

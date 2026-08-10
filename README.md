@@ -27,7 +27,7 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
 
-推荐使用 V2.6.0 便携桌面版：解压 `小红书抖音下载-v2.6.0-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态。
+推荐使用 V2.6.1 便携桌面版：解压 `小红书抖音下载-v2.6.1-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态。
 
 在 PowerShell 中运行：
 
