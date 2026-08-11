@@ -59,11 +59,26 @@ def test_url_type_detection():
     from xhs_dl.core.downloader import XhsDownloader
     assert XhsDownloader._is_short_url("http://xhslink.com/o/xxx")
     assert XhsDownloader._is_short_url("https://xhslink.com/a/yyy")
+    assert XhsDownloader._is_short_url("http://xhslink.cn/o/zzz")
     assert not XhsDownloader._is_short_url("https://www.xiaohongshu.com/explore/xxx")
 
     assert XhsDownloader._is_long_url("https://www.xiaohongshu.com/explore/6a4dc64100000000220147df?xsec_token=xxx")
     assert XhsDownloader._is_long_url("https://www.xiaohongshu.com/discovery/item/6a50b32f000000000603721e")
     assert not XhsDownloader._is_long_url("http://xhslink.com/o/xxx")
+
+
+def test_local_cli_canonicalizes_xhslink_cn_for_legacy_upstream():
+    from xhs_dl.core.v2_downloader import LocalCliEngine
+
+    assert LocalCliEngine._canonicalize_source_url(
+        "http://xhslink.cn/o/97Pz4siAYx4"
+    ) == "http://xhslink.com/o/97Pz4siAYx4"
+    assert LocalCliEngine._canonicalize_source_url(
+        "https://www.xhslink.cn/o/97Pz4siAYx4"
+    ) == "https://www.xhslink.com/o/97Pz4siAYx4"
+    assert LocalCliEngine._canonicalize_source_url(
+        "https://www.xiaohongshu.com/explore/abc"
+    ) == "https://www.xiaohongshu.com/explore/abc"
     print("url_type_detection: PASS")
 
 def test_sanitize():

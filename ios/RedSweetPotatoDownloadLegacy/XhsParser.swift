@@ -2,7 +2,9 @@ import Foundation
 
 final class XhsParser {
     func fetch(_ sourceURL: URL, completion: @escaping (NoteData?, Error?) -> Void) {
-        let fixed = sourceURL.absoluteString.replacingOccurrences(of: "http://xhslink.com", with: "https://xhslink.com")
+        let fixed = sourceURL.absoluteString
+            .replacingOccurrences(of: "http://xhslink.com", with: "https://xhslink.com")
+            .replacingOccurrences(of: "http://xhslink.cn", with: "https://xhslink.cn")
         guard let normalized = URL(string: fixed) else {
             completion(nil, AppFailure.invalidURL)
             return

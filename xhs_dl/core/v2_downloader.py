@@ -89,6 +89,16 @@ class LocalCliEngine:
         return environment
 
     @staticmethod
+    def _canonicalize_source_url(url: str) -> str:
+        """Map the current xhslink.cn alias to the host understood by upstream."""
+        return re.sub(
+            r"(?i)^(https?://)(www\.)?xhslink\.cn(?=/)",
+            r"\1\2xhslink.com",
+            url,
+            count=1,
+        )
+
+    @staticmethod
     def _media_files(root: Path) -> dict:
         if not root.exists():
             return {}
@@ -106,7 +116,7 @@ class LocalCliEngine:
         bridge = Path(__file__).resolve().parents[1] / "engine_bridge.py"
         command = [
             str(self.python), str(bridge),
-            "--url", url,
+            "--url", self._canonicalize_source_url(url),
             "--work-path", str(output_dir.parent),
             "--folder-name", output_dir.name,
         ]

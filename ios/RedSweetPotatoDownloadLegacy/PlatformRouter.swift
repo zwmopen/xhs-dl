@@ -12,7 +12,8 @@ enum PlatformRouter {
             return .douyin
         }
         if host == "xiaohongshu.com" || host.hasSuffix(".xiaohongshu.com")
-            || host == "xhslink.com" || host.hasSuffix(".xhslink.com") {
+            || host == "xhslink.com" || host.hasSuffix(".xhslink.com")
+            || host == "xhslink.cn" || host.hasSuffix(".xhslink.cn") {
             return .xiaohongshu
         }
         return nil

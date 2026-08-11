@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 XHS_HOSTS = {
     "xhslink.com",
     "www.xhslink.com",
+    "xhslink.cn",
+    "www.xhslink.cn",
     "xiaohongshu.com",
     "www.xiaohongshu.com",
     "xiaohongshu.cn",

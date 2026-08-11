@@ -19,6 +19,7 @@ public final class PlatformRouter {
                 || host.equals("www.douyin.com") || host.equals("iesdouyin.com")
                 || host.equals("www.iesdouyin.com")) return "douyin";
         if (host.equals("xhslink.com") || host.equals("www.xhslink.com")
+                || host.equals("xhslink.cn") || host.equals("www.xhslink.cn")
                 || host.equals("xiaohongshu.com") || host.equals("www.xiaohongshu.com")
                 || host.equals("xiaohongshu.cn") || host.equals("www.xiaohongshu.cn")
                 || host.equals("rednote.com") || host.equals("www.rednote.com")) return "xhs";

@@ -8,6 +8,12 @@ import sys
 from pathlib import Path
 
 
+def emit_payload(payload) -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Download public Xiaohongshu or Douyin works")
     source = parser.add_mutually_exclusive_group(required=True)
@@ -30,11 +36,11 @@ def main() -> int:
         from xhs_dl.core.unified_downloader import UnifiedDownloader
         from xhs_dl.storage import history_path
     except ImportError as exc:
-        print(json.dumps({
+        emit_payload({
             "success": 0,
             "failed": 1,
             "error": f"xhs-dl is not installed: {exc}",
-        }, ensure_ascii=False))
+        })
         return 2
 
     text = args.text
@@ -42,7 +48,7 @@ def main() -> int:
         try:
             text = Path(args.file).read_text(encoding="utf-8")
         except OSError as exc:
-            print(json.dumps({"success": 0, "failed": 1, "error": str(exc)}, ensure_ascii=False))
+            emit_payload({"success": 0, "failed": 1, "error": str(exc)})
             return 2
     urls = []
     seen = set()
@@ -52,7 +58,7 @@ def main() -> int:
             seen.add(url)
             urls.append(url)
     if not urls:
-        print(json.dumps({"success": 0, "failed": 1, "error": "No supported URL found"}, ensure_ascii=False))
+        emit_payload({"success": 0, "failed": 1, "error": "No supported URL found"})
         return 2
 
     try:
@@ -64,7 +70,7 @@ def main() -> int:
         )
         result = downloader.download(urls)
     except Exception as exc:
-        print(json.dumps({"success": 0, "failed": len(urls), "error": str(exc)}, ensure_ascii=False))
+        emit_payload({"success": 0, "failed": len(urls), "error": str(exc)})
         return 2
 
     payload = {
@@ -87,7 +93,7 @@ def main() -> int:
             for item in result.results
         ],
     }
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    emit_payload(payload)
     return 0 if result.fail_count == 0 else 1
 
 

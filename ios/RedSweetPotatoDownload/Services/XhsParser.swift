@@ -18,7 +18,10 @@ enum XhsParserError: LocalizedError {
 
 struct XhsParser {
     func fetch(_ sourceURL: URL) async throws -> NoteData {
-        let normalized = URL(string: sourceURL.absoluteString.replacingOccurrences(of: "http://xhslink.com", with: "https://xhslink.com")) ?? sourceURL
+        let normalizedText = sourceURL.absoluteString
+            .replacingOccurrences(of: "http://xhslink.com", with: "https://xhslink.com")
+            .replacingOccurrences(of: "http://xhslink.cn", with: "https://xhslink.cn")
+        let normalized = URL(string: normalizedText) ?? sourceURL
         var request = URLRequest(url: normalized, timeoutInterval: 30)
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148", forHTTPHeaderField: "User-Agent")
         request.setValue("zh-CN,zh;q=0.9", forHTTPHeaderField: "Accept-Language")

@@ -69,6 +69,14 @@ def test_legacy_client_has_cabled_real_device_diagnostics():
     assert "automation-result.json" in controller
 
 
+def test_legacy_client_accepts_current_xhslink_cn_short_links():
+    router = (LEGACY / "PlatformRouter.swift").read_text(encoding="utf-8")
+    parser = (LEGACY / "XhsParser.swift").read_text(encoding="utf-8")
+
+    assert 'host == "xhslink.cn"' in router
+    assert '"http://xhslink.cn", with: "https://xhslink.cn"' in parser
+
+
 def test_legacy_downloads_large_media_to_temporary_files():
     store = (LEGACY / "DownloadStore.swift").read_text(encoding="utf-8")
 

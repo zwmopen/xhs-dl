@@ -55,8 +55,8 @@ def test_ios_release_version_and_workflow_match():
         encoding="utf-8"
     )
 
-    assert "MARKETING_VERSION: 0.3.0" in project
-    assert 'info["CFBundleShortVersionString"] == "0.3.0"' in workflow
+    assert "MARKETING_VERSION: 0.3.1" in project
+    assert 'info["CFBundleShortVersionString"] == "0.3.1"' in workflow
 
 
 def test_ios_update_checker_finds_ipa_inside_unified_product_release():

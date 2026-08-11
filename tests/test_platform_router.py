@@ -7,6 +7,7 @@ def test_detect_platform_supports_xhs_and_douyin_share_links():
     assert detect_platform("https://v.douyin.com/VFppn9c-lds/") == "douyin"
     assert detect_platform("https://www.douyin.com/note/7663398572494336177") == "douyin"
     assert detect_platform("https://xhslink.com/o/70dt8TsFJon") == "xhs"
+    assert detect_platform("http://xhslink.cn/o/97Pz4siAYx4") == "xhs"
     assert detect_platform("https://www.xiaohongshu.com/explore/abc") == "xhs"
     assert detect_platform("https://example.com/file") == "unknown"
 

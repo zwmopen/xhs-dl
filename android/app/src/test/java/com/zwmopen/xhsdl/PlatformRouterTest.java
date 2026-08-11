@@ -10,6 +10,7 @@ public final class PlatformRouterTest {
         assertEquals("douyin", PlatformRouter.detect("https://v.douyin.com/VFppn9c-lds/"));
         assertEquals("douyin", PlatformRouter.detect("https://www.douyin.com/note/7663398572494336177"));
         assertEquals("xhs", PlatformRouter.detect("https://xhslink.com/o/70dt8TsFJon"));
+        assertEquals("xhs", PlatformRouter.detect("http://xhslink.cn/o/97Pz4siAYx4"));
         assertEquals("unknown", PlatformRouter.detect("https://example.com/file"));
     }
 }

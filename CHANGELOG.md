@@ -1,5 +1,12 @@
 # 变更记录
 
+## 2.6.2 - 2026-08-11
+
+- 支持小红书新分享短链域名 `xhslink.cn`，Windows、Android 与 iPhone 路由保持一致。
+- Windows 适配器将 `.cn` 短链规范化为上游兼容的 `.com` 等价入口，保留原始下载网址写入集中历史；不修改或复制第三方引擎源码。
+- 修复 AI Skill 在 Windows GBK 控制台输出含 Emoji 的下载结果时触发 `UnicodeEncodeError`，现在稳定输出 UTF-8 JSON。
+- 使用真实公开链接 `http://xhslink.cn/o/97Pz4siAYx4` 验证成功：15/15 张 JPG、完整 `文案.txt`、中文与 🍃 文件名，Skill 返回 `success 1 / failed 0`。
+
 ## 2.6.1 - 2026-08-10
 
 - 修复 Windows 继承包含裸 IPv6 条目的 `NO_PROXY/no_proxy` 时，上游 `httpx 0.28` 把 `::1` 误解析为非法端口并导致所有小红书链接立即失败的问题。

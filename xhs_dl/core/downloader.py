@@ -197,8 +197,8 @@ class XhsDownloader:
 
     @staticmethod
     def _is_short_url(url: str) -> bool:
-        """判断是否为 xhslink.com 短链接"""
-        return "xhslink.com" in url
+        """判断是否为 xhslink.com / xhslink.cn 短链接"""
+        return "xhslink.com" in url or "xhslink.cn" in url
 
     @staticmethod
     def _is_long_url(url: str) -> bool:
