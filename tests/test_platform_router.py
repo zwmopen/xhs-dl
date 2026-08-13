@@ -129,6 +129,41 @@ def test_douyin_engine_saves_media_copy_and_central_history(tmp_path, monkeypatc
     assert (tmp_path / "appdata" / "xhs-dl" / "history.json").is_file()
 
 
+def test_douyin_redownloads_zero_byte_existing_media(tmp_path, monkeypatch):
+    from xhs_dl.core.douyin_downloader import DouyinBrowserEngine
+
+    payload = {
+        "final_url": "https://www.douyin.com/note/7662955671021581285",
+        "title": "旧文件恢复",
+        "author": "作者",
+        "likes": "1",
+        "comments": "2",
+        "media": [{"url": "https://example/media.webp", "kind": "image", "extension": "webp"}],
+    }
+    monkeypatch.setattr(DouyinBrowserEngine, "_extract_page", lambda self, url: payload)
+    called = []
+
+    def fake_download(self, media, destination):
+        called.append(destination)
+        output = destination.with_suffix(".jpg")
+        output.write_bytes(b"valid-media" * 30)
+        return output
+
+    monkeypatch.setattr(DouyinBrowserEngine, "_download_media", fake_download)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "appdata"))
+    folder = tmp_path / "downloads" / "评2-赞1-旧文件恢复-作者"
+    folder.mkdir(parents=True)
+    (folder / "封面-旧文件恢复.jpg").write_bytes(b"")
+
+    result = DouyinBrowserEngine().download_one(
+        "https://v.douyin.com/example/", tmp_path / "downloads"
+    )
+
+    assert result.success
+    assert len(called) == 1
+    assert (folder / "封面-旧文件恢复.jpg").stat().st_size >= 200
+
+
 def test_unified_downloader_routes_mixed_links_in_input_order(tmp_path):
     from xhs_dl.core.models import NoteResult
     from xhs_dl.core.unified_downloader import UnifiedDownloader

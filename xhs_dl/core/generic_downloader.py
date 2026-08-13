@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from .media_names import convert_image_file, media_filename, safe_title
+from .media_names import convert_image_file, media_filename, media_sort_key, safe_title
 from .models import NoteResult
 from xhs_dl.storage import add_history
 
@@ -118,8 +118,11 @@ class YtDlpEngine:
                 raise RuntimeError("平台没有返回可识别的公开媒体信息")
 
             files = sorted(
-                path for path in staging.iterdir()
-                if path.is_file() and not path.name.endswith((".part", ".ytdl", ".json"))
+                (
+                    path for path in staging.iterdir()
+                    if path.is_file() and not path.name.endswith((".part", ".ytdl", ".json"))
+                ),
+                key=media_sort_key,
             )
             if not files:
                 raise RuntimeError("该公开链接没有解析到可下载媒体")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "2.8.1"
+version = "2.8.2"
 description = "万能下载器 - 本地公开媒体下载器"
 readme = "README.md"
 requires-python = ">=3.9"

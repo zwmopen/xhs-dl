@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 public final class MediaSaver {
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36";
@@ -114,6 +115,7 @@ public final class MediaSaver {
         connection.connect();
         int status = connection.getResponseCode();
         if (status < 200 || status >= 400) throw new IOException("媒体下载失败：HTTP " + status);
+        validateMediaResponse(connection);
         try (InputStream input = connection.getInputStream();
              OutputStream output = context.getContentResolver().openOutputStream(destination, "w")) {
             if (output == null) throw new IOException("无法写入所选目录");
@@ -136,6 +138,7 @@ public final class MediaSaver {
         connection.connect();
         int status = connection.getResponseCode();
         if (status < 200 || status >= 400) throw new IOException("媒体下载失败：HTTP " + status);
+        validateMediaResponse(connection);
         Uri destination = create(name, mime, relative);
         try (InputStream input = connection.getInputStream();
              OutputStream output = context.getContentResolver().openOutputStream(destination)) {
@@ -172,7 +175,24 @@ public final class MediaSaver {
         }
         byte[] buffer = new byte[128 * 1024];
         int count;
-        while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
+        long total = 0;
+        while ((count = input.read(buffer)) > 0) {
+            output.write(buffer, 0, count);
+            total += count;
+        }
+        if (total < 200) throw new IOException("媒体文件过小，可能是错误页面或空响应");
+    }
+
+    private static void validateMediaResponse(HttpURLConnection connection) throws IOException {
+        String contentType = connection.getContentType();
+        if (contentType == null) return;
+        String normalized = contentType.toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("text/")
+                || normalized.contains("text/html")
+                || normalized.contains("application/json")
+                || normalized.contains("application/xhtml")) {
+            throw new IOException("服务器返回了网页或错误信息，不是媒体文件");
+        }
     }
 
     private void replaceText(String name, String text, String relative) throws IOException {

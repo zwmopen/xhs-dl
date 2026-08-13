@@ -15,7 +15,7 @@ def test_primary_brand_is_universal_downloader():
 def test_patch_release_version_is_current():
     import xhs_dl
 
-    assert xhs_dl.__version__ == "2.8.1"
+    assert xhs_dl.__version__ == "2.8.2"
 
 
 def test_windows_surfaces_use_primary_brand():

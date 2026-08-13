@@ -125,3 +125,33 @@ def test_generic_engine_converts_webp_images_to_selected_format(tmp_path):
     assert output.is_file()
     assert Image.open(output).format == "JPEG"
     assert not (folder / "封面-通用图片 😊.webp").exists()
+
+
+def test_generic_engine_uses_natural_media_order(tmp_path):
+    from PIL import Image
+    from xhs_dl.core.generic_downloader import YtDlpEngine
+
+    class FakeYoutubeDL:
+        def __init__(self, options):
+            self.options = options
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def extract_info(self, url, download=True):
+            output = Path(self.options["paths"]["home"])
+            for name, color in (("image_10.webp", "red"), ("image_2.webp", "blue"), ("image_1.webp", "green")):
+                Image.new("RGB", (2, 2), color).save(output / name, "WEBP")
+            return {"id": "ordered", "title": "自然排序", "uploader": "作者"}
+
+    result = YtDlpEngine(youtube_dl_class=FakeYoutubeDL).download_one(
+        "https://x.com/example/status/ordered", tmp_path
+    )
+
+    folder = Path(result.save_dir)
+    assert Image.open(folder / "封面-自然排序.jpg").getpixel((0, 0))[1] > 100
+    assert Image.open(folder / "内页1-自然排序.jpg").getpixel((0, 0))[2] > 100
+    assert Image.open(folder / "内页2-自然排序.jpg").getpixel((0, 0))[0] > 100

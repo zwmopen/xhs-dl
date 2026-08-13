@@ -248,6 +248,14 @@ class DouyinBrowserEngine:
             return convert_image_file(destination, self.image_format)
         return destination
 
+    @staticmethod
+    def _usable_media(path):
+        """Existing files are reusable only when they are non-empty media-sized files."""
+        try:
+            return Path(path).is_file() and Path(path).stat().st_size >= 200
+        except OSError:
+            return False
+
     def download_one(self, url, output_dir):
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -267,7 +275,7 @@ class DouyinBrowserEngine:
                 extension,
                 is_video=media.kind == "video",
             )
-            if not destination.exists():
+            if not self._usable_media(destination):
                 downloaded = note_dir / media_filename(
                     index - 1,
                     work.title,
