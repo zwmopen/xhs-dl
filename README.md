@@ -1,6 +1,12 @@
-# 小红书抖音下载
+# 小红书抖音下载（多平台增强版）
 
-小红书与抖音公开作品原始媒体下载器，提供 Windows、Android、iPhone 三套独立客户端。各端只保存本机数据，不做设备互联或云同步。
+公开社交平台媒体下载器。Windows V2.7.0 在原有小红书、抖音专用引擎上增加本地 yt-dlp 适配层；Android、iPhone 暂时仍保持小红书与抖音能力。各端只保存本机数据，不做设备互联或云同步。
+
+## V2.7.0 多平台范围
+
+Windows 和 AI Skill 首批识别：小红书、抖音、X/Twitter、B站、YouTube、TikTok、Instagram、Facebook、Pinterest、Reddit、Vimeo、Bluesky。小红书与抖音继续走原专用引擎，其他平台由本地 yt-dlp 和随包 FFmpeg 处理。
+
+“支持”表示可尝试下载公开媒体，不代表每条链接永久可用。平台可能临时限流或强制登录；软件不会读取浏览器 Cookie，也不会绕过私密、年龄、地区或访问控制。本机实测 X 与 B站公开链接成功；YouTube 在当前网络触发匿名机器人确认，因此会原样报告失败。
 
 ## V2 特性
 
@@ -27,7 +33,7 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
 
-推荐使用 V2.6.2 便携桌面版：解压 `小红书抖音下载-v2.6.2-portable-windows.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态。
+推荐使用 V2.7.0 便携桌面版：解压 `小红书抖音下载-v2.7.0-windows-portable.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态；通用平台组件已经随包提供。
 
 在 PowerShell 中运行：
 

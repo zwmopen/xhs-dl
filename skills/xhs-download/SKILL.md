@@ -1,11 +1,11 @@
 ---
 name: xhs-download
-description: Download public Xiaohongshu/RedNote notes and Douyin videos or image posts from share text to local original media without platform login or cookies. Use for single or batch downloads, local archiving, media extraction, retrying failed public works, and checking centralized download history. Never use for private, access-controlled, or unauthorized content.
+description: Download public media from Xiaohongshu/RedNote, Douyin, X/Twitter, Bilibili, YouTube, TikTok, Instagram, Facebook, Pinterest, Reddit, Vimeo, and Bluesky to local folders without platform login or browser cookies. Use for single or batch downloads, local archiving, media extraction, retrying failed public works, and checking centralized history. Never use for private, access-controlled, or unauthorized content.
 ---
 
-# Xiaohongshu + Douyin Download
+# Multi-platform Public Media Download
 
-Download only public works the user explicitly provides or authorizes. Mixed Xiaohongshu and Douyin links are supported. Keep all media local by default.
+Download only public works the user explicitly provides or authorizes. Mixed supported links are accepted. Xiaohongshu and Douyin use dedicated engines; other listed platforms use the local yt-dlp adapter. Keep all media local by default.
 
 ## Workflow
 
@@ -24,12 +24,13 @@ Download only public works the user explicitly provides or authorizes. Mixed Xia
 - Do not bypass private-note, deleted-note, age, regional, or access controls.
 - Use `cautious` by default. Use `fast` only for a small user-approved test batch.
 - Preserve creator-embedded marks; remove only the platform-delivered watermark by selecting original media.
+- If a platform demands login or bot confirmation, return the limitation and never import browser cookies automatically.
 - Read `references/safety.md` before changing engines, network behavior, or installation scripts.
 - Read `references/visual-language.md` before changing any Web, Windows, Android, or iPhone interface.
 
 ## Interfaces
 
-- Desktop UI: run `xhs-dl-desktop` or the portable `小红书抖音下载.exe`. Douyin uses a clean temporary Edge context, not the user's browser profile.
+- Desktop UI: run `xhs-dl-desktop` or the packaged app. Douyin uses a clean temporary Edge context; generic platforms use packaged yt-dlp and FFmpeg.
 - Android UI: install the release APK, paste or share text into “小红书抖音下载”, and use either `Download/小红书抖音下载` or a folder authorized in Settings.
 - iPhone UI: build the SwiftUI client under `ios/`; use its local Files default or a user-authorized Files/iCloud Drive directory. It is independent from the other clients.
 - Legacy visual UI: run `xhs-dl-web` or `python -m xhs_dl.web.app`.

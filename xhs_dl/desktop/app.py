@@ -244,7 +244,7 @@ class DesktopApp(ctk.CTk):
         brand = ctk.CTkFrame(header, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="w")
         ctk.CTkLabel(brand, text="小红书抖音下载", font=("STSong", 28, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="小红书 / 抖音 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        ctk.CTkLabel(brand, text="小红书 / 抖音 / X / B站等 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
         next_theme = "克制玻璃" if self.theme == "neo" else "拟态悬浮"
         self.theme_button = ctk.CTkButton(header, text=next_theme, width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.switch_theme)
         self.theme_button.grid(row=0, column=1, padx=(0, 8))
@@ -266,7 +266,7 @@ class DesktopApp(ctk.CTk):
 
         self.input_box = ctk.CTkTextbox(body, corner_radius=16, border_width=1, border_color=p["line"], fg_color=p["input"], text_color=p["text"], font=("Microsoft YaHei UI", 14), wrap="word")
         self.input_box.grid(row=1, column=0, sticky="nsew", padx=(28, 12), pady=(0, 22))
-        self.input_box.insert("1.0", "把小红书或抖音分享内容粘贴到这里……")
+        self.input_box.insert("1.0", "把支持平台的分享内容粘贴到这里……")
         self.input_box.configure(text_color=p["muted"])
         self.input_box.bind("<FocusIn>", self._clear_placeholder, add="+")
 
@@ -318,13 +318,13 @@ class DesktopApp(ctk.CTk):
 
     def show_help(self):
         messagebox.showinfo(
-            "小红书抖音下载 · 使用说明",
-            "1. 粘贴一条或多条小红书、抖音分享内容。\n"
+            "多平台素材下载 · 使用说明",
+            "1. 粘贴小红书、抖音、X、B站、YouTube 等支持平台的公开链接。\n"
             "2. 点击“开始采集”；识别到剪贴板链接时也可点“粘贴并采集”。\n"
             "3. 下载目录可在设置中随时更改，默认是系统下载文件夹。\n\n"
             "4. 图片默认转为高质量 JPG，也可在设置中选择 PNG 或保持原格式。\n\n"
-            "软件只处理你有权保存的公开内容，不读取浏览器账号，不需要登录。"
-            "抖音由本机 Edge 的临时无痕环境解析，批量任务会自动放慢速度。"
+            "软件只处理你有权保存的公开内容，不读取浏览器账号或 Cookie。"
+            "平台若强制登录会明确提示，不会绕过；批量任务会自动放慢速度。"
         )
 
     def check_update_manual(self):
@@ -380,7 +380,7 @@ class DesktopApp(ctk.CTk):
         urls = extract_urls_from_text(self.input_box.get("1.0", "end"))
         if not urls:
             self.status_title.configure(text="等待开始")
-            self.status_detail.configure(text="还没有识别到小红书或抖音链接")
+            self.status_detail.configure(text="还没有识别到支持平台的链接")
             return
         configured = self.settings.get("mode", "auto")
         selected = automatic_mode(len(urls)) if configured == "auto" else configured
@@ -403,7 +403,7 @@ class DesktopApp(ctk.CTk):
         text = self.input_box.get("1.0", "end").strip()
         urls = extract_urls_from_text(text)
         if not urls:
-            messagebox.showwarning("还缺少链接", "请先粘贴至少一条小红书或抖音分享链接。")
+            messagebox.showwarning("还缺少链接", "请先粘贴至少一条支持平台的公开分享链接。")
             return
         self.running = True
         self.download_button.configure(state="disabled", text="采集中")

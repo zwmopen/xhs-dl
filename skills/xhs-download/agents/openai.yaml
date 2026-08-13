@@ -1,4 +1,4 @@
 interface:
-  display_name: "小红书抖音下载"
-  short_description: "免登录保存小红书与抖音公开作品的原始媒体和文案"
-  default_prompt: "Use $xhs-download to save the public Xiaohongshu or Douyin share links I provide to a local folder."
+  display_name: "多平台素材下载"
+  short_description: "免登录保存多个社交平台的公开媒体和文案"
+  default_prompt: "Use $xhs-download to save the supported public social-media links I provide without reading browser cookies."

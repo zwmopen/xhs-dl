@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 from .douyin_downloader import DouyinBrowserEngine
+from .generic_downloader import YtDlpEngine
 from .models import DownloadResult, NoteResult
 from .platforms import detect_platform
 from .v2_downloader import LocalCliEngine
@@ -39,6 +40,8 @@ class UnifiedDownloader:
                 self.engines[platform] = DouyinBrowserEngine(
                     timeout=min(self.timeout, 90), image_format=self.image_format
                 )
+            elif platform == "generic":
+                self.engines[platform] = YtDlpEngine(timeout=self.timeout)
         return self.engines.get(platform)
 
     def download(self, urls):

@@ -1,5 +1,13 @@
 # 变更记录
 
+## 2.7.0 - 2026-08-13
+
+- 在原有小红书、抖音专用引擎之外新增本地 yt-dlp 适配层，首批路由 X/Twitter、B站、YouTube、TikTok、Instagram、Facebook、Pinterest、Reddit、Vimeo 与 Bluesky。
+- 通用平台继续复用统一文件夹、媒体命名、`文案.txt` 与集中历史，不在作品目录生成 JSON。
+- 打包内加入 yt-dlp 与 FFmpeg 运行组件，不读取浏览器 Cookie，不调用第三方在线解析网站。
+- 真实匿名验证：X 视频与 B站视频下载成功且 MP4 头有效；YouTube 在当前网络要求机器人确认，按安全边界明确失败而不读取登录态。
+- 共享 `xhs-download` Skill 保留兼容名称并升级成多平台自动路由入口。
+
 ## 2.6.2 - 2026-08-11
 
 - 支持小红书新分享短链域名 `xhslink.cn`，Windows、Android 与 iPhone 路由保持一致。

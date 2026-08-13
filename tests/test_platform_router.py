@@ -12,6 +12,27 @@ def test_detect_platform_supports_xhs_and_douyin_share_links():
     assert detect_platform("https://example.com/file") == "unknown"
 
 
+def test_detect_platform_routes_public_social_media_to_generic_engine():
+    from xhs_dl.core.platforms import detect_platform
+
+    urls = [
+        "https://x.com/example/status/123",
+        "https://twitter.com/example/status/123",
+        "https://www.youtube.com/watch?v=abc",
+        "https://youtu.be/abc",
+        "https://www.bilibili.com/video/BV1abc",
+        "https://vm.tiktok.com/example/",
+        "https://www.instagram.com/reel/example/",
+        "https://www.facebook.com/reel/123",
+        "https://www.pinterest.com/pin/123/",
+        "https://www.reddit.com/r/example/comments/123/post/",
+        "https://vimeo.com/123",
+        "https://bsky.app/profile/example/post/123",
+    ]
+
+    assert [detect_platform(url) for url in urls] == ["generic"] * len(urls)
+
+
 def test_group_urls_keeps_each_platform_separate_and_preserves_order():
     from xhs_dl.core.platforms import group_urls
 
@@ -23,6 +44,7 @@ def test_group_urls_keeps_each_platform_separate_and_preserves_order():
     assert group_urls(urls) == {
         "douyin": [urls[0], urls[2]],
         "xhs": [urls[1]],
+        "generic": [],
         "unknown": [],
     }
 
@@ -144,6 +166,28 @@ def test_unified_downloader_routes_mixed_links_in_input_order(tmp_path):
         ("xhs", urls[1]),
     ]
     assert progress == [("douyin", 1, 2), ("xhs", 2, 2)]
+
+
+def test_unified_downloader_routes_generic_platform_without_changing_order(tmp_path):
+    from xhs_dl.core.models import NoteResult
+    from xhs_dl.core.unified_downloader import UnifiedDownloader
+
+    calls = []
+
+    class FakeEngine:
+        def download_one(self, url, output_dir):
+            calls.append((url, Path(output_dir)))
+            return NoteResult(url=url, success=True, title="通用平台")
+
+    url = "https://x.com/example/status/123"
+    result = UnifiedDownloader(
+        output_dir=str(tmp_path),
+        delay=(0, 0),
+        engines={"generic": FakeEngine()},
+    ).download([url])
+
+    assert result.success_count == 1
+    assert calls == [(url, tmp_path)]
 
 
 def test_douyin_media_download_streams_atomically_and_rejects_html(tmp_path, monkeypatch):

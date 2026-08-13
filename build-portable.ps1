@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "2.6.2"
+    [string]$Version = "2.7.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +24,8 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
     --paths $ProjectRoot `
     --collect-all customtkinter `
     --collect-all playwright `
+    --collect-all yt_dlp `
+    --collect-all imageio_ffmpeg `
     --exclude-module numpy `
     --exclude-module pygame `
     --add-data "$(Join-Path $ProjectRoot 'xhs_dl\engine_bridge.py');xhs_dl" `
@@ -41,13 +43,14 @@ Copy-Item -LiteralPath (Join-Path $ProjectRoot "setup-v2.ps1") -Destination $Sta
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "install-engine.bat") -Destination $StageRoot
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "PORTABLE-GUIDE.md") -Destination $StageRoot
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "LICENSE") -Destination $StageRoot
+Copy-Item -LiteralPath (Join-Path $ProjectRoot "THIRD-PARTY-LICENSES.md") -Destination $StageRoot
 
 if (Test-Path -LiteralPath $InstallRoot) {
     Remove-Item -LiteralPath $InstallRoot -Recurse -Force
 }
 Copy-Item -LiteralPath $StageRoot -Destination $InstallRoot -Recurse
 
-$Archive = Join-Path $ProjectRoot "dist\$ProductName-v$Version-portable-windows.zip"
+$Archive = Join-Path $ProjectRoot "dist\$ProductName-v$Version-windows-portable.zip"
 if (Test-Path -LiteralPath $Archive) {
     Remove-Item -LiteralPath $Archive -Force
 }

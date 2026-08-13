@@ -6,6 +6,6 @@
 - Store output locally. Do not upload downloaded creator content to GitHub or public storage.
 - Treat creator-embedded logos and signatures as part of the original content.
 - Rate-limit batches. Default to 25–45 seconds between notes.
-- Use only the configured local engine. Online parsing sites disclose URLs and browsing interests to third parties and require explicit opt-in.
+- Use only configured local engines. The generic adapter may use packaged yt-dlp and FFmpeg but must not import browser cookies. Online parsing sites disclose URLs and browsing interests to third parties and require explicit opt-in.
 - Review engine updates before changing the pinned commit. Run tests after every update.
 - Respect copyright, privacy, platform terms, and applicable law. Downloading does not transfer reuse rights.

@@ -15,7 +15,7 @@ def emit_payload(payload) -> None:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Download public Xiaohongshu or Douyin works")
+    parser = argparse.ArgumentParser(description="Download supported public social-media works")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--text", help="Share text or one/more URLs")
     source.add_argument("--file", help="UTF-8 file containing share text or URLs")

@@ -8,8 +8,8 @@
 
 ## Invoke
 
-- Share text: `python scripts/download.py --text "分享文本" --output "D:\Download\小红书"`
-- Text file: `python scripts/download.py --file "D:\links.txt" --output "D:\Download\小红书"`
+- Share text: `python scripts/download.py --text "分享文本" --output "D:\Download\多平台素材"`
+- Text file: `python scripts/download.py --file "D:\links.txt" --output "D:\Download\多平台素材"`
 - Visual interface: run `启动Web版.bat` from the application folder.
 
 The command prints JSON for the calling agent. Download folders contain media and `文案.txt`; centralized history is stored at `%LOCALAPPDATA%\xhs-dl\history.json`.
@@ -18,5 +18,6 @@ The command prints JSON for the calling agent. Download folders contain media an
 
 - `ready: false`: run the one-click installer or provide `--engine-home`.
 - No supported URL: ask for a fresh public share link.
+- Platform demands login or bot confirmation: report the limitation; never import browser cookies automatically.
 - Timeout or access failure: keep completed results, wait, and retry using `slow`.
 - Never switch to V1 automatically; it may download platform-watermarked media.
