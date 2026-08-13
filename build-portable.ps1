@@ -50,7 +50,7 @@ if (Test-Path -LiteralPath $InstallRoot) {
 }
 Copy-Item -LiteralPath $StageRoot -Destination $InstallRoot -Recurse
 
-$Archive = Join-Path $ProjectRoot "dist\$ProductName-v$Version-windows-portable.zip"
+$Archive = Join-Path $ProjectRoot "dist\xhs-dl-v$Version-windows-portable.zip"
 if (Test-Path -LiteralPath $Archive) {
     Remove-Item -LiteralPath $Archive -Force
 }
