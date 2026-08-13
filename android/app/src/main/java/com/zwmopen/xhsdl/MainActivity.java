@@ -118,7 +118,7 @@ public final class MainActivity extends Activity {
 
         LinearLayout header = row();
         LinearLayout brand = column();
-        TextView title = text("小红书抖音下载", 30, TEXT, true);
+        TextView title = text("万能下载器", 30, TEXT, true);
         title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
         brand.addView(title);
         brand.addView(text("小红书 / 抖音 · 手机直存 · 无需登录", 12, MUTED, false));
@@ -260,7 +260,7 @@ public final class MainActivity extends Activity {
         StringBuilder lines = new StringBuilder();
         MediaSaver saver = new MediaSaver(this);
         HistoryStore history = new HistoryStore(this);
-        String rootFolder = preferences.getString("folder", "小红书抖音下载");
+        String rootFolder = preferences.getString("folder", "万能下载器");
         String treeUri = preferences.getString("download_tree_uri", "");
         for (int i = 0; i < urls.size(); i++) {
             int index = i;
@@ -380,7 +380,7 @@ public final class MainActivity extends Activity {
             if (!selected.isEmpty()) intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(selected));
             startActivity(intent);
             String custom = preferences.getString("download_tree_name", "");
-            Toast.makeText(this, custom.isEmpty() ? "文件位于 Download/" + preferences.getString("folder", "小红书抖音下载") : "文件位于 " + custom, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, custom.isEmpty() ? "文件位于 Download/" + preferences.getString("folder", "万能下载器") : "文件位于 " + custom, Toast.LENGTH_LONG).show();
         } catch (Exception error) {
             Toast.makeText(this, "请在设置中查看当前下载目录", Toast.LENGTH_LONG).show();
         }

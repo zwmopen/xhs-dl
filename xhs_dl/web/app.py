@@ -11,6 +11,7 @@ from pathlib import Path
 
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
 from xhs_dl import __version__
+from xhs_dl.branding import APP_NAME
 from xhs_dl.core.unified_downloader import UnifiedDownloader
 
 
@@ -115,7 +116,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
 <body data-theme="neo">
 <main class="shell">
   <header class="topbar">
-    <div class="brand"><div class="mark">x·</div><div><h1>小红书抖音下载</h1><p>公开作品原始媒体 · 本地保存 · 无需登录</p></div></div>
+    <div class="brand"><div class="mark">∞</div><div><h1>__APP_NAME__</h1><p>多平台公开媒体 · 本地保存 · 无需登录</p></div></div>
     <button class="theme-switch" id="themeButton" type="button" aria-label="切换视觉主题">克制玻璃</button>
   </header>
   <section class="workspace">
@@ -140,7 +141,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
       <div class="results" id="results"></div>
     </aside>
   </section>
-  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · 小红书抖音下载 V__APP_VERSION__</p>
+  <p class="footnote">仅处理你有权保存的公开内容 · 创作者嵌入原图的署名会保留 · __APP_NAME__ V__APP_VERSION__</p>
 </main>
 <script>
 const THEME_KEY='xhs-dl-theme',OUTPUT_KEY='xhs-dl-output',MODE_KEY='xhs-dl-mode',FORMAT_KEY='xhs-dl-format',DEFAULT_OUTPUT=__DEFAULT_OUTPUT_JSON__,MIN_PROGRESS_MS=1100;
@@ -220,7 +221,7 @@ class Handler(BaseHTTPRequestHandler):
             html = TEMPLATE.replace(
                 "__DEFAULT_OUTPUT_JSON__",
                 json.dumps(DEFAULT_OUTPUT_DIR, ensure_ascii=False),
-            ).replace("__APP_VERSION__", __version__)
+            ).replace("__APP_VERSION__", __version__).replace("__APP_NAME__", APP_NAME)
             self._html(html)
             return
         if self.path.startswith("/api/jobs/"):
@@ -316,7 +317,7 @@ def main():
     port = 5678
     server = HTTPServer((host, port), Handler)
     url = "http://{}:{}".format(host, port)
-    print("小红书抖音下载 V{} Web: {}".format(__version__, url))
+    print("{} V{} Web: {}".format(APP_NAME, __version__, url))
     print("Press Ctrl+C to stop")
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:

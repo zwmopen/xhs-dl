@@ -170,7 +170,7 @@ class DouyinBrowserEngine:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as exc:
-            raise EngineNotReady("抖音浏览器组件未安装，请重新安装最新版小红书抖音下载。") from exc
+            raise EngineNotReady("抖音浏览器组件未安装，请重新安装最新版万能下载器。") from exc
 
         try:
             with sync_playwright() as playwright:

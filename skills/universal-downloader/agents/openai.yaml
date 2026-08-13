@@ -1,0 +1,4 @@
+interface:
+  display_name: "万能下载器"
+  short_description: "免登录保存多个社交平台的公开媒体和文案"
+  default_prompt: "Use $universal-downloader to save the supported public-media links I provide without reading browser cookies."

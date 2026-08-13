@@ -87,11 +87,11 @@ public final class SettingsActivity extends Activity {
         LinearLayout titles = column();
         titles.setPadding(dp(12), 0, 0, 0);
         titles.addView(label("设置与帮助", 26, text, true));
-        titles.addView(label("小红书抖音下载 · Android V" + BuildConfig.VERSION_NAME, 12, muted, false));
+        titles.addView(label("万能下载器 · Android V" + BuildConfig.VERSION_NAME, 12, muted, false));
         header.addView(titles, new LinearLayout.LayoutParams(0, -2, 1));
         root.addView(header, bottom(18));
 
-        LinearLayout storage = section("保存位置与速度", "默认保存在系统 Download/小红书抖音下载，也可以授权其他文件夹。", root);
+        LinearLayout storage = section("保存位置与速度", "默认保存在系统 Download/万能下载器，也可以授权其他文件夹。", root);
         modeSpinner = new Spinner(this);
         modeSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, MODE_LABELS));
         modeSpinner.setBackground(round(soft, 13, accent, 1));
@@ -110,7 +110,7 @@ public final class SettingsActivity extends Activity {
         storage.addView(formatSpinner, top(8));
 
         defaultFolder = new EditText(this);
-        defaultFolder.setText(preferences.getString("folder", "小红书抖音下载"));
+        defaultFolder.setText(preferences.getString("folder", "万能下载器"));
         defaultFolder.setHint("Download 下的默认文件夹名称");
         defaultFolder.setTextColor(text);
         defaultFolder.setHintTextColor(muted);
@@ -139,7 +139,7 @@ public final class SettingsActivity extends Activity {
         save.setOnClickListener(v -> saveSettings());
         storage.addView(save, top(14));
 
-        LinearLayout about = section("关于小红书抖音下载", "本地优先的小红书 / 抖音公开作品保存工具，不要求账号，不读取浏览器 Cookie，也不把链接交给第三方解析站。", root);
+        LinearLayout about = section("关于万能下载器", "当前手机端支持小红书 / 抖音公开作品；不要求账号，不读取浏览器 Cookie，也不把链接交给第三方解析站。", root);
         about.addView(infoRow("设计思路", "内容清楚、操作克制；默认拟态悬浮，备用克制玻璃；下载结果与历史留在你的设备。"), top(12));
         Button guide = secondaryButton("使用说明与安全边界");
         guide.setOnClickListener(v -> showGuide());
@@ -222,7 +222,7 @@ public final class SettingsActivity extends Activity {
     private String folderSummary() {
         String uri = preferences.getString("download_tree_uri", "");
         if (!uri.isEmpty()) return "当前：" + preferences.getString("download_tree_name", "自定义文件夹") + "（系统已授权）";
-        return "当前：Download/" + preferences.getString("folder", "小红书抖音下载");
+        return "当前：Download/" + preferences.getString("folder", "万能下载器");
     }
 
     private void saveSettings() {
@@ -230,7 +230,7 @@ public final class SettingsActivity extends Activity {
         preferences.edit()
                 .putString("mode", MODE_VALUES[modeSpinner.getSelectedItemPosition()])
                 .putString("image_format", FORMAT_VALUES[formatSpinner.getSelectedItemPosition()])
-                .putString("folder", folder.isEmpty() ? "小红书抖音下载" : folder)
+                .putString("folder", folder.isEmpty() ? "万能下载器" : folder)
                 .putBoolean("auto_update", automaticUpdates.isChecked())
                 .apply();
         customFolderLabel.setText(folderSummary());
@@ -240,7 +240,7 @@ public final class SettingsActivity extends Activity {
     private void showGuide() {
         String message = "1. 复制小红书或抖音公开作品链接，或把整段分享文字粘贴到首页。\n\n"
                 + "2. 单条直接采集；批量任务会按数量自动采用随机间隔。\n\n"
-                + "3. 默认保存到 Download/小红书抖音下载；也可以在本页授权其他目录。每条作品只放媒体和文案.txt。\n\n"
+                + "3. 默认保存到 Download/万能下载器；也可以在本页授权其他目录。每条作品只放媒体和文案.txt。\n\n"
                 + "4. 图片默认转为高质量 JPG，也可以选择 PNG 或保持平台原格式。\n\n"
                 + "5. 历史记录集中保存在应用内部，不会散落 JSON。\n\n"
                 + "只处理你有权保存的公开内容；不会绕过私密、删除、地区或年龄限制；作者主动嵌入原图的署名会保留。";

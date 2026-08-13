@@ -1,8 +1,8 @@
-# 小红书抖音下载 iPhone 客户端
+# 万能下载器 iPhone 客户端
 
 ## 当前状态
 
-iOS V0.3.1。当前发布目标使用兼容 iOS 12 的 UIKit 客户端，已完成两平台公开作品解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。GitHub 的 macOS 15 / Xcode 16.4 构建机同时执行 iPhone Simulator 编译和未预签名 IPA 打包，IPA 内部 App 与可执行文件保持 ASCII，中文只作为手机显示名。Windows 可使用本机 Sideloadly 与已连接 iPhone 完成签名、安装和真机验收。
+iOS V0.3.2。显示名为“万能下载器”，当前能力仍为小红书与抖音两平台。发布目标使用兼容 iOS 12 的 UIKit 客户端，已完成公开作品解析、原图/视频保存、文案、集中历史、自选 Files 文件夹、双主题、使用说明和更新检测。Bundle ID 保持不变，升级不会安装成另一个 App。
 
 ## 在 Mac 上构建
 
@@ -14,7 +14,7 @@ iOS V0.3.1。当前发布目标使用兼容 iOS 12 的 UIKit 客户端，已完�
 
 ## 数据位置
 
-- 默认下载：App 的 Documents/小红书抖音下载，可在“文件”App 中看到。
+- 默认下载：App 的 Documents/万能下载器，可在“文件”App 中看到；升级用户此前自选目录继续保留。
 - 自选目录：使用系统文件夹选择器保存持久书签，写入期间启用 security-scoped access，授权可随时在设置中恢复默认。
 - 历史：Application Support/history.json，仅在本机保存。
 

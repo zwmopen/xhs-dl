@@ -50,12 +50,12 @@ jobs:
           rm -rf package
           mkdir -p package/Payload
           ditto "$app_path" "package/Payload/RedSweetPotatoDownload.app"
-          (cd package && /usr/bin/zip -qry ../red-sweet-potato-download-ios-v0.3.1-altstore.ipa Payload)
+          (cd package && /usr/bin/zip -qry ../universal-downloader-ios-v0.3.2-altstore.ipa Payload)
           python3 - <<'PY'
           import plistlib
           import zipfile
 
-          ipa = "red-sweet-potato-download-ios-v0.3.1-altstore.ipa"
+          ipa = "universal-downloader-ios-v0.3.2-altstore.ipa"
           with zipfile.ZipFile(ipa) as archive:
               names = archive.namelist()
               assert "Payload/RedSweetPotatoDownload.app/RedSweetPotatoDownload" in names
@@ -63,17 +63,17 @@ jobs:
               assert all(name.isascii() for name in names), "IPA contains non-ASCII paths"
               info = plistlib.loads(archive.read("Payload/RedSweetPotatoDownload.app/Info.plist"))
               assert info["CFBundleExecutable"] == "RedSweetPotatoDownload"
-              assert info["CFBundleDisplayName"] == "小红书抖音下载"
+              assert info["CFBundleDisplayName"] == "万能下载器"
               assert info["CFBundleIdentifier"] == "com.zwmopen.redsweetpotatodownload"
-              assert info["CFBundleShortVersionString"] == "0.3.1"
+              assert info["CFBundleShortVersionString"] == "0.3.2"
               assert info["MinimumOSVersion"] == "12.0"
           print("IPA structure verified")
           PY
-          shasum -a 256 red-sweet-potato-download-ios-v0.3.1-altstore.ipa > red-sweet-potato-download-ios-v0.3.1-altstore.ipa.sha256
+          shasum -a 256 universal-downloader-ios-v0.3.2-altstore.ipa > universal-downloader-ios-v0.3.2-altstore.ipa.sha256
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: red-sweet-potato-download-ios-v0.3.1-altstore
+          name: universal-downloader-ios-v0.3.2-altstore
           path: |
-            ios/red-sweet-potato-download-ios-v0.3.1-altstore.ipa
-            ios/red-sweet-potato-download-ios-v0.3.1-altstore.ipa.sha256
+            ios/universal-downloader-ios-v0.3.2-altstore.ipa
+            ios/universal-downloader-ios-v0.3.2-altstore.ipa.sha256

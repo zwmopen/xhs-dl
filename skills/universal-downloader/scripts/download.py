@@ -19,7 +19,7 @@ def parse_args():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--text", help="Share text or one/more URLs")
     source.add_argument("--file", help="UTF-8 file containing share text or URLs")
-    parser.add_argument("--output", default="./xhs_downloads")
+    parser.add_argument("--output", default="./universal_downloads")
     parser.add_argument(
         "--mode", default="cautious",
         choices=["fast", "normal", "cautious", "slow", "very-slow"],

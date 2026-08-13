@@ -32,7 +32,7 @@ struct RootView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("小红书抖音下载")
+                Text("万能下载器")
                     .font(.system(size: 34, weight: .regular, design: .serif))
                     .foregroundStyle(theme.text)
                 Text("公开笔记 · iPhone 直存 · 无需登录")

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-dl"
-version = "2.7.0"
-description = "多平台素材下载 - 本地公开媒体下载器"
+version = "2.8.0"
+description = "万能下载器 - 本地公开媒体下载器"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = ["requests>=2.28.0", "customtkinter>=5.2.2", "playwright>=1.55.0", "Pillow>=10.0", "yt-dlp>=2026.7.4", "imageio-ffmpeg>=0.6.0"]
@@ -15,6 +15,7 @@ license = {text = "MIT"}
 xhs-dl = "xhs_dl.cli:main"
 xhs-dl-web = "xhs_dl.web.app:main"
 xhs-dl-desktop = "xhs_dl.desktop.app:main"
+universal-downloader = "xhs_dl.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["xhs_dl*"]

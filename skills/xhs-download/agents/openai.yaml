@@ -1,4 +1,6 @@
 interface:
-  display_name: "多平台素材下载"
-  short_description: "免登录保存多个社交平台的公开媒体和文案"
-  default_prompt: "Use $xhs-download to save the supported public social-media links I provide without reading browser cookies."
+  display_name: "小红书下载（兼容入口）"
+  short_description: "旧调用名，自动转交万能下载器"
+  default_prompt: "Use $xhs-download to route this legacy download request to $universal-downloader."
+policy:
+  allow_implicit_invocation: false

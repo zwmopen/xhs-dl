@@ -1,8 +1,8 @@
-# 小红书抖音下载（多平台增强版）
+# 万能下载器
 
-公开社交平台媒体下载器。Windows V2.7.0 在原有小红书、抖音专用引擎上增加本地 yt-dlp 适配层；Android、iPhone 暂时仍保持小红书与抖音能力。各端只保存本机数据，不做设备互联或云同步。
+公开社交平台媒体下载器。Windows V2.8.0 使用“万能下载器”正式品牌，在原有小红书、抖音专用引擎上增加本地 yt-dlp 适配层；Android、iPhone 同步改显示名称，但暂时仍保持小红书与抖音能力。各端只保存本机数据，不做设备互联或云同步。
 
-## V2.7.0 多平台范围
+## V2.8.0 多平台范围
 
 Windows 和 AI Skill 首批识别：小红书、抖音、X/Twitter、B站、YouTube、TikTok、Instagram、Facebook、Pinterest、Reddit、Vimeo、Bluesky。小红书与抖音继续走原专用引擎，其他平台由本地 yt-dlp 和随包 FFmpeg 处理。
 
@@ -33,7 +33,7 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
 
-推荐使用 V2.7.0 便携桌面版：解压 `xhs-dl-v2.7.0-windows-portable.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `小红书抖音下载.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态；通用平台组件已经随包提供。
+推荐使用 V2.8.0 便携桌面版：解压 `universal-downloader-v2.8.0-windows-portable.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `万能下载器.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态；通用平台组件已经随包提供。
 
 在 PowerShell 中运行：
 
@@ -80,13 +80,13 @@ xhs-dl-web
 
 ## Android 应用
 
-安装发布页中的 `小红书抖音下载-android-v1.3.1.apk`。可以手动粘贴分享文字，也可以在其他应用中点“分享”并选择“小红书抖音下载”。新安装默认保存到手机 `Download/小红书抖音下载`；设置中既能修改默认子目录，也能用 Android 系统文件夹选择器授权任意可写目录。升级用户会保留旧目录设置。
+Android V1.3.2 显示名为“万能下载器”，当前仍只支持小红书和抖音。可以手动粘贴或通过系统分享进入；新安装默认保存到 `Download/万能下载器`，升级用户会保留此前自选目录。
 
 安卓端与电脑端使用同名的“拟态悬浮 / 克制玻璃”双主题，并记住主题、下载子目录、自动频率和更新检测设置。Android 10 及以上使用系统 MediaStore 保存，不需要索取全部文件权限。
 
 ## iPhone 应用
 
-`ios/` 提供小红书抖音下载 iOS V0.3.1 客户端，当前发布目标兼容 iOS 12 / iPhone 6。默认保存到“文件”App 可见的 `小红书抖音下载` 目录，也可以通过系统目录选择器改到“我的 iPhone”或 iCloud Drive 中用户授权的文件夹。iOS 设置页包含主题、下载目录、设计说明、使用说明和手动更新检测。
+`ios/` 提供“万能下载器”iOS V0.3.2 客户端，当前仍只支持小红书和抖音，发布目标兼容 iOS 12 / iPhone 6。默认保存到“文件”App 可见的 `万能下载器` 目录，也可以改到用户授权的“我的 iPhone”或 iCloud Drive 文件夹。
 
 iPhone 版与另外两端相互独立，不上传下载历史。仓库使用 GitHub macOS 构建机做无签名模拟器编译；安装到真机仍需用户自己的 Apple 开发签名，详见 `ios/README.md`。
 
@@ -108,7 +108,7 @@ xhs_downloads/
 
 仅下载你有权访问和保存的公开内容；请尊重创作者版权、平台规则与隐私。链接解析受平台接口和风控变化影响，失败时可降低频率或更新本地引擎。
 
-详细说明见 `使用手册.md` 与 `安全与注意事项.md`。共享 AI/OpenClaw 技能位于 `skills/xhs-download`。
+详细说明见 `使用手册.md` 与 `安全与注意事项.md`。正式 AI/OpenClaw Skill 位于 `skills/universal-downloader`；`skills/xhs-download` 仅保留旧调用兼容。
 
 ## License
 

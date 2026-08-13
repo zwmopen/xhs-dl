@@ -11,7 +11,7 @@ def test_ios_display_name_is_xiaohongshu_douyin_download():
     with (IOS / "RedSweetPotatoDownload" / "Info.plist").open("rb") as stream:
         info = plistlib.load(stream)
 
-    assert info["CFBundleDisplayName"] == "小红书抖音下载"
+    assert info["CFBundleDisplayName"] == "万能下载器"
 
 
 def test_ios_bundle_id_is_unique_and_not_album_identity():
@@ -29,7 +29,7 @@ def test_ci_verifies_the_real_display_name_and_unique_bundle_id():
         encoding="utf-8"
     )
 
-    assert 'info["CFBundleDisplayName"] == "小红书抖音下载"' in workflow
+    assert 'info["CFBundleDisplayName"] == "万能下载器"' in workflow
     assert (
         'info["CFBundleIdentifier"] == "com.zwmopen.redsweetpotatodownload"'
         in workflow
@@ -55,8 +55,8 @@ def test_ios_release_version_and_workflow_match():
         encoding="utf-8"
     )
 
-    assert "MARKETING_VERSION: 0.3.1" in project
-    assert 'info["CFBundleShortVersionString"] == "0.3.1"' in workflow
+    assert "MARKETING_VERSION: 0.3.2" in project
+    assert 'info["CFBundleShortVersionString"] == "0.3.2"' in workflow
 
 
 def test_ios_update_checker_finds_ipa_inside_unified_product_release():

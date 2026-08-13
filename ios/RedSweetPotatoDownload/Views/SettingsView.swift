@@ -5,7 +5,7 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @AppStorage("theme") private var themeValue = AppTheme.neo.rawValue
     @AppStorage("autoUpdate") private var autoUpdate = true
-    @State private var folderName = "文件/小红书抖音下载"
+    @State private var folderName = "文件/万能下载器"
     @State private var showsFolderPicker = false
     @State private var showsGuide = false
     @State private var updateMessage: String?
@@ -54,7 +54,7 @@ struct SettingsView: View {
     }
 
     private var storageSection: some View {
-        section(title: "下载目录", detail: "默认进入 iPhone“文件/小红书抖音下载”；也可以授权 iCloud Drive 或“我的 iPhone”中的其他文件夹。") {
+        section(title: "下载目录", detail: "默认进入 iPhone“文件/万能下载器”；也可以授权 iCloud Drive 或“我的 iPhone”中的其他文件夹。") {
             Label(folderName, systemImage: "folder.fill")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(theme.text)
@@ -80,7 +80,7 @@ struct SettingsView: View {
     }
 
     private var aboutSection: some View {
-        section(title: "关于小红书抖音下载", detail: "本地优先、免账号登录、直接读取公开笔记原图地址。") {
+        section(title: "关于万能下载器", detail: "当前手机端支持小红书与抖音；本地优先、免账号登录。") {
             info("设计思路", "内容层稳定清楚，玻璃只服务导航和短暂操作；中文可读性、进度和失败原因优先。")
             Button("使用说明与安全边界") { showsGuide = true }.buttonStyle(.bordered)
             Button(checkingUpdate ? "正在检测…" : "检测更新") { checkUpdate() }
@@ -144,7 +144,7 @@ struct GuideView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     guide("1 · 粘贴", "复制公开小红书笔记链接或整段分享文字，回到首页点“粘贴”。")
                     guide("2 · 采集", "单条直接开始；批量任务会自动使用随机间隔，降低连续访问风险。")
-                    guide("3 · 保存", "默认进入“文件/小红书抖音下载”，每条笔记文件夹只包含媒体和文案.txt。")
+                    guide("3 · 保存", "默认进入“文件/万能下载器”，每条笔记文件夹只包含媒体和文案.txt。")
                     guide("4 · 数据", "历史 JSON 位于 App 内部数据，不会上云，不散落到下载目录。")
                     guide("安全边界", "只处理你有权保存的公开内容；不绕过私密、删除、年龄、地区或其他访问限制；作者做进原图的署名会保留。")
                 }

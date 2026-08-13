@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills" / "xhs-download" / "scripts" / "download.py"
+SCRIPT = ROOT / "skills" / "universal-downloader" / "scripts" / "download.py"
 
 
 def _load_skill_entry():

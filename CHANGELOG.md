@@ -1,5 +1,12 @@
 # 变更记录
 
+## 2.8.0 - 2026-08-13
+
+- 正式产品名升级为“万能下载器”；Windows 窗口、Web、CLI、EXE、便携包和桌面入口统一使用新品牌。
+- 正式共享 Skill 更名为 `universal-downloader`；旧 `xhs-download` 降级为无脚本兼容路由，避免历史自动化失效或形成第二套实现。
+- Android 显示版本升至 1.3.2，iPhone 升至 0.3.2；保留既有 applicationId / Bundle ID 和用户设置，确保是原应用升级而非新装平行应用。
+- 手机端界面明确说明当前只支持小红书与抖音；“万能”指统一产品与可扩展架构，不虚报三端平台能力相同。
+
 ## 2.7.0 - 2026-08-13
 
 - 在原有小红书、抖音专用引擎之外新增本地 yt-dlp 适配层，首批路由 X/Twitter、B站、YouTube、TikTok、Instagram、Facebook、Pinterest、Reddit、Vimeo 与 Bluesky。

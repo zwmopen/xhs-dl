@@ -9,7 +9,7 @@ final class DownloadStore {
     private let workQueue = DispatchQueue(label: "com.zwmopen.redsweetpotato.storage")
 
     var currentFolderName: String {
-        return UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/小红书抖音下载"
+        return UserDefaults.standard.string(forKey: folderNameKey) ?? "文件/万能下载器"
     }
 
     func rememberFolder(_ url: URL) throws {
@@ -122,7 +122,7 @@ final class DownloadStore {
 
     private func defaultRoot() throws -> URL {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let root = documents.appendingPathComponent("小红书抖音下载", isDirectory: true)
+        let root = documents.appendingPathComponent("万能下载器", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         return root
     }

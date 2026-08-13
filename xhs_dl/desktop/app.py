@@ -10,6 +10,7 @@ import customtkinter as ctk
 import requests
 
 from xhs_dl import __version__
+from xhs_dl.branding import APP_NAME
 from xhs_dl.core.downloader import DELAY_MODES, extract_urls_from_text
 from xhs_dl.core.v2_downloader import EngineNotReady
 from xhs_dl.core.unified_downloader import UnifiedDownloader
@@ -216,7 +217,7 @@ class DesktopApp(ctk.CTk):
         self.running = False
         self._placeholder = True
         self._clipboard_text = ""
-        self.title("小红书抖音下载")
+        self.title(APP_NAME)
         window_width = min(1080, max(900, screen_width - 40))
         window_height = min(700, max(620, screen_height - 80))
         self.geometry(f"{window_width}x{window_height}")
@@ -243,7 +244,7 @@ class DesktopApp(ctk.CTk):
         header.grid_columnconfigure(0, weight=1)
         brand = ctk.CTkFrame(header, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(brand, text="小红书抖音下载", font=("STSong", 28, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(brand, text=APP_NAME, font=("STSong", 28, "bold"), text_color=p["text"]).grid(row=0, column=0, sticky="w")
         ctk.CTkLabel(brand, text="小红书 / 抖音 / X / B站等 · 本地保存 · 无需登录", font=("Microsoft YaHei UI", 12), text_color=p["muted"]).grid(row=1, column=0, sticky="w", pady=(4, 0))
         next_theme = "克制玻璃" if self.theme == "neo" else "拟态悬浮"
         self.theme_button = ctk.CTkButton(header, text=next_theme, width=104, height=40, corner_radius=12, fg_color=p["secondary"], hover_color=p["secondary_hover"], text_color=p["text"], command=self.switch_theme)
@@ -318,7 +319,7 @@ class DesktopApp(ctk.CTk):
 
     def show_help(self):
         messagebox.showinfo(
-            "多平台素材下载 · 使用说明",
+            f"{APP_NAME} · 使用说明",
             "1. 粘贴小红书、抖音、X、B站、YouTube 等支持平台的公开链接。\n"
             "2. 点击“开始采集”；识别到剪贴板链接时也可点“粘贴并采集”。\n"
             "3. 下载目录可在设置中随时更改，默认是系统下载文件夹。\n\n"

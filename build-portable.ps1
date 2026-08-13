@@ -1,10 +1,10 @@
 param(
-    [string]$Version = "2.7.0"
+    [string]$Version = "2.8.0"
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path $PSScriptRoot).Path
-$ProductName = -join ([char[]](0x5C0F, 0x7EA2, 0x4E66, 0x6296, 0x97F3, 0x4E0B, 0x8F7D))
+$ProductName = -join ([char[]](0x4E07, 0x80FD, 0x4E0B, 0x8F7D, 0x5668))
 $BuildRoot = Join-Path $ProjectRoot "build\portable"
 $OutputRoot = Join-Path $BuildRoot "output"
 $StageRoot = Join-Path $BuildRoot "stage\$ProductName-portable-v$Version"
@@ -50,7 +50,7 @@ if (Test-Path -LiteralPath $InstallRoot) {
 }
 Copy-Item -LiteralPath $StageRoot -Destination $InstallRoot -Recurse
 
-$Archive = Join-Path $ProjectRoot "dist\xhs-dl-v$Version-windows-portable.zip"
+$Archive = Join-Path $ProjectRoot "dist\universal-downloader-v$Version-windows-portable.zip"
 if (Test-Path -LiteralPath $Archive) {
     Remove-Item -LiteralPath $Archive -Force
 }

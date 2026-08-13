@@ -12,7 +12,7 @@ def main():
             stream.reconfigure(errors="replace")
 
     parser = argparse.ArgumentParser(
-        description="多平台素材下载：公开作品本地媒体下载器",
+        description="万能下载器：公开作品本地媒体下载器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -87,7 +87,7 @@ def main():
     delay = DELAY_MODES[args.mode]
     print("=" * 60)
     from xhs_dl import __version__
-    print(f"  多平台素材下载 v{__version__}")
+    print(f"  万能下载器 v{__version__}")
     print(f"  共 {len(all_urls)} 个链接 → {args.output}")
     print(f"  模式: {args.mode} (间隔 {delay[0]}-{delay[1]}秒)")
     if len(all_urls) > 1:
