@@ -88,3 +88,40 @@ def test_generic_engine_passes_bundled_ffmpeg_to_yt_dlp(tmp_path, monkeypatch):
     assert result.success
     assert captured["ffmpeg_location"] == "C:/app/ffmpeg.exe"
     assert captured["noprogress"] is True
+
+
+def test_generic_engine_converts_webp_images_to_selected_format(tmp_path):
+    from PIL import Image
+    from xhs_dl.core.generic_downloader import YtDlpEngine
+
+    class FakeYoutubeDL:
+        def __init__(self, options):
+            self.options = options
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def extract_info(self, url, download=True):
+            output = Path(self.options["paths"]["home"])
+            Image.new("RGB", (3, 2), "orange").save(output / "cover.webp", "WEBP")
+            return {
+                "id": "cover",
+                "title": "通用图片 😊",
+                "uploader": "示例作者",
+                "description": "公开图片",
+            }
+
+    result = YtDlpEngine(
+        youtube_dl_class=FakeYoutubeDL,
+        image_format="jpg",
+    ).download_one("https://x.com/example/status/123", tmp_path)
+
+    assert result.success
+    folder = Path(result.save_dir)
+    output = folder / "封面-通用图片 😊.jpg"
+    assert output.is_file()
+    assert Image.open(output).format == "JPEG"
+    assert not (folder / "封面-通用图片 😊.webp").exists()

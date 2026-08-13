@@ -17,7 +17,7 @@ from typing import Callable, List, Optional, Tuple
 
 from .downloader import DELAY_MODES, extract_urls_from_text
 from .models import DownloadResult, NoteResult
-from .media_names import convert_image_file, media_filename
+from .media_names import convert_image_file, media_filename, media_sort_key
 from xhs_dl.storage import add_history
 
 logger = logging.getLogger(__name__)
@@ -268,7 +268,7 @@ class LocalCliEngine:
     @staticmethod
     def _rename_media_files(files: List[Path], title: str, image_format: str = "jpg") -> List[Path]:
         renamed = []
-        ordered = sorted(files)
+        ordered = sorted(files, key=media_sort_key)
         images = [path for path in ordered if path.suffix.lower() not in VIDEO_EXTENSIONS]
         videos = [path for path in ordered if path.suffix.lower() in VIDEO_EXTENSIONS]
         for index, path in enumerate(images):

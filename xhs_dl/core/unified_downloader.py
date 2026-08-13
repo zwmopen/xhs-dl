@@ -41,7 +41,9 @@ class UnifiedDownloader:
                     timeout=min(self.timeout, 90), image_format=self.image_format
                 )
             elif platform == "generic":
-                self.engines[platform] = YtDlpEngine(timeout=self.timeout)
+                self.engines[platform] = YtDlpEngine(
+                    timeout=self.timeout, image_format=self.image_format
+                )
         return self.engines.get(platform)
 
     def download(self, urls):

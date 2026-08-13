@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from .media_names import media_filename, safe_title
+from .media_names import convert_image_file, media_filename, safe_title
 from .models import NoteResult
 from xhs_dl.storage import add_history
 
@@ -25,10 +25,12 @@ class YtDlpEngine:
     def __init__(
         self,
         timeout=300,
+        image_format="jpg",
         youtube_dl_class="auto",
         import_error=None,
     ):
         self.timeout = timeout
+        self.image_format = image_format
         self.import_error = import_error
         if youtube_dl_class == "auto":
             try:
@@ -130,6 +132,9 @@ class YtDlpEngine:
             for source in files:
                 extension = source.suffix.lstrip(".").lower() or "bin"
                 is_image = extension in IMAGE_EXTENSIONS
+                if is_image and self.image_format != "keep":
+                    source = convert_image_file(source, self.image_format)
+                    extension = source.suffix.lstrip(".").lower()
                 index = image_index if is_image else video_index
                 target = folder / media_filename(
                     index, title, extension, is_video=not is_image

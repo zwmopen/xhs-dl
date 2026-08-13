@@ -4,6 +4,15 @@ import re
 from pathlib import Path
 
 
+def media_sort_key(path):
+    """Sort upstream media names naturally: 1, 2, 10 instead of 1, 10, 2."""
+    name = Path(path).name.lower()
+    return tuple(
+        int(part) if part.isdigit() else part
+        for part in re.split(r"(\d+)", name)
+    )
+
+
 def safe_title(value, limit=64):
     cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(value or "")).strip(" .-")
     return (cleaned or "未命名作品")[:limit]

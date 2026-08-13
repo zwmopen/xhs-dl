@@ -12,6 +12,12 @@ def test_primary_brand_is_universal_downloader():
     assert "小红书抖音下载" in LEGACY_APP_NAMES
 
 
+def test_patch_release_version_is_current():
+    import xhs_dl
+
+    assert xhs_dl.__version__ == "2.8.1"
+
+
 def test_windows_surfaces_use_primary_brand():
     desktop = (ROOT / "xhs_dl" / "desktop" / "app.py").read_text(encoding="utf-8")
     web = (ROOT / "xhs_dl" / "web" / "app.py").read_text(encoding="utf-8")

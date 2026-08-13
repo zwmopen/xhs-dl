@@ -3,7 +3,6 @@
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -29,6 +28,13 @@ def parse_args():
     return parser.parse_args()
 
 
+def extract_urls(text):
+    """Use the same URL grammar as the desktop/web/core download paths."""
+    from xhs_dl.core.downloader import extract_urls_from_text
+
+    return extract_urls_from_text(text or "")
+
+
 def main() -> int:
     args = parse_args()
     try:
@@ -50,13 +56,7 @@ def main() -> int:
         except OSError as exc:
             emit_payload({"success": 0, "failed": 1, "error": str(exc)})
             return 2
-    urls = []
-    seen = set()
-    for match in re.finditer(r'https?://[^\s<>"\']+', text or "", re.IGNORECASE):
-        url = match.group(0).rstrip("，,。.；;）)】]!?")
-        if url not in seen:
-            seen.add(url)
-            urls.append(url)
+    urls = extract_urls(text)
     if not urls:
         emit_payload({"success": 0, "failed": 1, "error": "No supported URL found"})
         return 2

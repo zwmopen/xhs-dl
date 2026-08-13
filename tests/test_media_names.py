@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 def test_image_media_names_use_cover_and_inner_page_labels():
     from xhs_dl.core.media_names import media_filename
 
@@ -49,3 +52,13 @@ def test_mixed_media_keeps_cover_numbering_independent_from_video(tmp_path):
         "内页1-混合媒体.jpg",
         "视频-混合媒体.mp4",
     }
+
+
+def test_media_sort_key_uses_natural_numeric_order():
+    from xhs_dl.core.media_names import media_sort_key
+
+    paths = [Path("图片_10.png"), Path("图片_2.png"), Path("图片_1.png")]
+
+    assert [path.name for path in sorted(paths, key=media_sort_key)] == [
+        "图片_1.png", "图片_2.png", "图片_10.png"
+    ]
