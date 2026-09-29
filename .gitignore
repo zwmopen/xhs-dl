@@ -9,3 +9,8 @@ build/
 xhs_downloads/
 v2_test_output/
 *.egg
+*.log
+clipboard_history.json
+clipboard_pending_queue.json
+WebDriverAgentRunner*
+*.ipa
