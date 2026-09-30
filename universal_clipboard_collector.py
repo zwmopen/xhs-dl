@@ -29,36 +29,6 @@ from pathlib import Path
 import ctypes
 from ctypes import wintypes
 
-# 路径定义
-PROJECT_ROOT = Path(r"D:\AICode\工具开发\projects\xhs-dl")
-DAEMON_LOG_FILE = PROJECT_ROOT / "collector_daemon.log"
-
-def log_daemon(msg: str):
-    try:
-        with open(DAEMON_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    except:
-        pass
-
-# 如果由 pythonw.exe 无窗口静默拉起，重定向输出至日志文件，防止第三方库 stdout=None 崩溃
-if sys.stdout is None:
-    try:
-        sys.stdout = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
-    except:
-        sys.stdout = open(os.devnull, "w", encoding="utf-8")
-if sys.stderr is None:
-    try:
-        sys.stderr = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
-    except:
-        sys.stderr = open(os.devnull, "w", encoding="utf-8")
-
-# 保证 UTF-8 环境与行级实时刷新
-if hasattr(sys.stdout, "reconfigure") and sys.stdout:
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
-    except:
-        pass
-
 # ==================== 动态配置与解耦加载器 (MaterialHub Config Loader) ====================
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent
@@ -68,6 +38,7 @@ LIB_DIR = SCRIPT_DIR / "lib"
 if (LIB_DIR / "xhs_dl").exists():
     sys.path.insert(0, str(LIB_DIR))
 
+# 自动探测配置文件
 CONFIG_FILE = None
 for candidate in [
     os.environ.get("MATERIAL_HUB_CONFIG"),
@@ -79,12 +50,28 @@ for candidate in [
         CONFIG_FILE = Path(candidate)
         break
 
+# 自愈配置：若无 config.json 则自动从 config.example.json 释放默认便携配置
+if not CONFIG_FILE:
+    for example_cand in [
+        SKILL_ROOT / "config" / "config.example.json",
+        SCRIPT_DIR / "config" / "config.example.json",
+        SCRIPT_DIR / "config.example.json"
+    ]:
+        if example_cand and Path(example_cand).exists():
+            target_cfg = example_cand.parent / "config.json"
+            try:
+                shutil.copy2(str(example_cand), str(target_cfg))
+                CONFIG_FILE = target_cfg
+                break
+            except Exception:
+                pass
+
 LOADED_CONFIG = {}
 if CONFIG_FILE and CONFIG_FILE.exists():
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f_cfg:
             LOADED_CONFIG = json.load(f_cfg)
-    except:
+    except Exception:
         pass
 
 storage_cfg = LOADED_CONFIG.get("storage", {})
@@ -94,16 +81,79 @@ notify_cfg = LOADED_CONFIG.get("notification", {})
 feishu_cfg = notify_cfg.get("feishu", {})
 rules_cfg = LOADED_CONFIG.get("classification_rules", {})
 
-# 基础存储路径 (优先读取 config.json，若无使用本地缺省)
-BASE_MATERIAL_DIR = Path(storage_cfg.get("material_root_dir", r"D:\AICode\项目推进\projects\江湖有旅人\主项目\01-素材库"))
-PRECISION_DIR = Path(storage_cfg.get("precision_dir", BASE_MATERIAL_DIR / "精准流量"))
-AUTUMN_DIR = Path(storage_cfg.get("autumn_dir", BASE_MATERIAL_DIR / "秋季（9—11月·智能分类）"))
-ALL_SEASON_DIR = Path(storage_cfg.get("all_season_dir", BASE_MATERIAL_DIR / "四季通用（全年·无季节限制）"))
-TEMP_DOWNLOAD_DIR = Path(storage_cfg.get("temp_download_dir", r"D:\AICode\运行数据\临时文件\xhs_clipboard_staging"))
-C_DOWNLOADS_DIR = Path(storage_cfg.get("unclassified_downloads_dir", str(Path.home() / "Downloads")))
+# 运行时数据与日志目录 (自适应解耦：优先 config -> 宿主历史兼容路径 -> 本地 data 目录)
+configured_data_dir = storage_cfg.get("data_dir")
+if configured_data_dir:
+    DATA_DIR = Path(configured_data_dir)
+elif Path(r"D:\AICode\工具开发\projects\xhs-dl").exists() and (Path(r"D:\AICode\工具开发\projects\xhs-dl") / "clipboard_history.json").exists():
+    DATA_DIR = Path(r"D:\AICode\工具开发\projects\xhs-dl")
+else:
+    DATA_DIR = SKILL_ROOT / "data"
 
-HISTORY_FILE = PROJECT_ROOT / "clipboard_history.json"
-QUEUE_FILE = PROJECT_ROOT / "clipboard_pending_queue.json"
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    DATA_DIR = Path.home() / ".material_hub"
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+PROJECT_ROOT = DATA_DIR
+DAEMON_LOG_FILE = DATA_DIR / "collector_daemon.log"
+HISTORY_FILE = DATA_DIR / "clipboard_history.json"
+QUEUE_FILE = DATA_DIR / "clipboard_pending_queue.json"
+
+def log_daemon(msg: str):
+    try:
+        with open(DAEMON_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except:
+        pass
+
+# 如果由 pythonw.exe 无窗口静默拉起，重定向输出至日志文件
+if sys.stdout is None:
+    try:
+        sys.stdout = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
+    except:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    try:
+        sys.stderr = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
+    except:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
+if hasattr(sys.stdout, "reconfigure") and sys.stdout:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
+    except:
+        pass
+
+# 基础存储路径自适应 (优先读取 config.json，若配置相对路径则基于 SKILL_ROOT；缺省时智能适配)
+def _resolve_dir(cfg_path: str, default_name: str) -> Path:
+    if cfg_path:
+        p = Path(cfg_path)
+        if not p.is_absolute():
+            p = (SKILL_ROOT / p).resolve()
+        return p
+    native_cand = Path(r"D:\AICode\项目推进\projects\江湖有旅人\主项目\01-素材库")
+    if native_cand.exists():
+        return native_cand if not default_name else (native_cand / default_name)
+    fallback_cand = Path.home() / "Downloads" / "MaterialHub" / "素材库"
+    return fallback_cand if not default_name else (fallback_cand / default_name)
+
+BASE_MATERIAL_DIR = _resolve_dir(storage_cfg.get("material_root_dir"), "")
+PRECISION_DIR = _resolve_dir(storage_cfg.get("precision_dir"), "精准流量") if storage_cfg.get("precision_dir") else (BASE_MATERIAL_DIR / "精准流量")
+AUTUMN_DIR = _resolve_dir(storage_cfg.get("autumn_dir"), "秋季（9—11月·智能分类）") if storage_cfg.get("autumn_dir") else (BASE_MATERIAL_DIR / "秋季（9—11月·智能分类）")
+ALL_SEASON_DIR = _resolve_dir(storage_cfg.get("all_season_dir"), "四季通用（全年·无季节限制）") if storage_cfg.get("all_season_dir") else (BASE_MATERIAL_DIR / "四季通用（全年·无季节限制）")
+
+temp_cfg = storage_cfg.get("temp_download_dir")
+if temp_cfg:
+    p = Path(temp_cfg)
+    TEMP_DOWNLOAD_DIR = (SKILL_ROOT / p).resolve() if not p.is_absolute() else p
+elif Path(r"D:\AICode\运行数据\临时文件\xhs_clipboard_staging").parent.exists():
+    TEMP_DOWNLOAD_DIR = Path(r"D:\AICode\运行数据\临时文件\xhs_clipboard_staging")
+else:
+    TEMP_DOWNLOAD_DIR = DATA_DIR / "temp_staging"
+
+C_DOWNLOADS_DIR = Path(storage_cfg.get("unclassified_downloads_dir", str(Path.home() / "Downloads")))
 
 # 对标账号清单
 SECOND_BRAIN_BENCHMARK_FILE = Path(bm_cfg.get("second_brain_benchmark_file", r"D:\SecondBrain\zwm-second-brain\03-项目\01-团建项目—江湖有旅人\对标账号与样板观察清单.md"))
@@ -116,7 +166,6 @@ DEEP_COOLDOWN_BASE = rc_cfg.get("deep_cooldown_base_seconds", 60)
 MAX_RETRIES = rc_cfg.get("max_retries", 4)
 
 # 引入万能下载器 CLI
-sys.path.insert(0, str(PROJECT_ROOT))
 try:
     from xhs_dl.cli import main as xhs_dl_main
 except Exception as e:
@@ -164,6 +213,21 @@ def send_desktop_notification(msg: str, title: str = "小红书剪贴板采集",
         except Exception as ex:
             if sys.stdout:
                 print(f"[Notify Error]: {ex}")
+    # Windows 原生 Toast 弹窗保底 (无需任何第三方包)
+    try:
+        clean_msg = msg.replace('"', ' ').replace("'", " ")[:120]
+        clean_title = title.replace('"', ' ').replace("'", " ")[:40]
+        ps_cmd = (
+            f"[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; "
+            f"$t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); "
+            f"$t.GetElementsByTagName('text')[0].AppendChild($t.CreateTextNode('{clean_title}')) | Out-Null; "
+            f"$t.GetElementsByTagName('text')[1].AppendChild($t.CreateTextNode('{clean_msg}')) | Out-Null; "
+            f"[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('MaterialHub').Show([Windows.UI.Notifications.ToastNotification]::new($t))"
+        )
+        subprocess.run(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_cmd], check=False, timeout=3)
+        return True
+    except Exception:
+        pass
     return False
 
 # 飞书同步通知配置 (用户指令：推送到飞书采集通知群，已采集啥啥啥，入库啥啥啥就行)
@@ -210,7 +274,7 @@ def send_feishu_material_sync(metadata: dict, queue_rem_count: int = 0):
     向飞书专属【素材采集通知群】同步详细入库卡片
     用户明确要求：纯文本，不要图，包含标题、链接、入库情况、分类情况及素材库大盘当前状态
     """
-    if not ENABLE_FEISHU_SYNC or not FEISHU_NOTIFY_PY.exists():
+    if not ENABLE_FEISHU_SYNC or not FEISHU_NOTIFY_PY or not FEISHU_NOTIFY_PY.exists():
         return
     try:
         title = metadata.get("title", "精选图文作品")
