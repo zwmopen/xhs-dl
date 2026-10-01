@@ -12,5 +12,8 @@ v2_test_output/
 *.log
 clipboard_history.json
 clipboard_pending_queue.json
+collector_heartbeat.json
 WebDriverAgentRunner*
 *.ipa
+*.tmp
+*.vbs

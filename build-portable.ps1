@@ -1,14 +1,16 @@
 param(
-    [string]$Version = "2.8.2"
+    [string]$Version = "3.6.0",
+    [ValidateSet("onedir", "onefile")]
+    [string]$Layout = "onedir"
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = (Resolve-Path $PSScriptRoot).Path
 $ProductName = -join ([char[]](0x4E07, 0x80FD, 0x4E0B, 0x8F7D, 0x5668))
-$BuildRoot = Join-Path $ProjectRoot "build\portable"
+$BuildRoot = Join-Path $ProjectRoot "build\portable-$Layout"
 $OutputRoot = Join-Path $BuildRoot "output"
 $StageRoot = Join-Path $BuildRoot "stage\$ProductName-portable-v$Version"
-$InstallRoot = Join-Path $ProjectRoot "dist\$ProductName-v$Version-portable"
+$InstallRoot = Join-Path $ProjectRoot "dist\$ProductName-v$Version-$Layout"
 $ExeName = "$ProductName.exe"
 
 foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
@@ -18,7 +20,7 @@ foreach ($target in @($BuildRoot, $OutputRoot, $StageRoot, $InstallRoot)) {
     }
 }
 
-python -m PyInstaller --noconfirm --clean --onefile --windowed `
+python -m PyInstaller --noconfirm --clean "--$Layout" --windowed `
     --name $ProductName `
     --icon (Join-Path $ProjectRoot "assets\red-sweet-potato-download.ico") `
     --paths $ProjectRoot `
@@ -34,11 +36,22 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed `
     --specpath (Join-Path $BuildRoot "spec") `
     (Join-Path $ProjectRoot "xhs_dl\portable.py")
 
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
+
 if (Test-Path -LiteralPath $StageRoot) {
     Remove-Item -LiteralPath $StageRoot -Recurse -Force
 }
 New-Item -ItemType Directory -Path $StageRoot -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $OutputRoot $ExeName) -Destination $StageRoot
+if ($Layout -eq "onedir") {
+    $BuiltApp = Join-Path $OutputRoot $ProductName
+    # Copy the directory contents, including _internal, not only the executable.
+    Get-ChildItem -LiteralPath $BuiltApp -Force | ForEach-Object {
+        $BuiltApp = $_.FullName
+        Copy-Item -LiteralPath $BuiltApp -Destination $StageRoot -Recurse
+    }
+} else {
+    Copy-Item -LiteralPath (Join-Path $OutputRoot $ExeName) -Destination $StageRoot
+}
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "setup-v2.ps1") -Destination $StageRoot
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "install-engine.bat") -Destination $StageRoot
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "PORTABLE-GUIDE.md") -Destination $StageRoot
@@ -50,7 +63,11 @@ if (Test-Path -LiteralPath $InstallRoot) {
 }
 Copy-Item -LiteralPath $StageRoot -Destination $InstallRoot -Recurse
 
-$Archive = Join-Path $ProjectRoot "dist\universal-downloader-v$Version-windows-portable.zip"
+$Archive = if ($Layout -eq "onedir") {
+    Join-Path $ProjectRoot "dist\universal-downloader-v$Version-windows-portable.zip"
+} else {
+    Join-Path $ProjectRoot "dist\universal-downloader-v$Version-windows-$Layout.zip"
+}
 if (Test-Path -LiteralPath $Archive) {
     Remove-Item -LiteralPath $Archive -Force
 }

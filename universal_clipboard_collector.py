@@ -97,33 +97,72 @@ except Exception:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 PROJECT_ROOT = DATA_DIR
+import logging
+from logging.handlers import RotatingFileHandler
+
 DAEMON_LOG_FILE = DATA_DIR / "collector_daemon.log"
 HISTORY_FILE = DATA_DIR / "clipboard_history.json"
 QUEUE_FILE = DATA_DIR / "clipboard_pending_queue.json"
+HEARTBEAT_FILE = DATA_DIR / "collector_heartbeat.json"
+
+# 配置 5MB 轮转日志 (最多保留 3 份归档，彻底根治日志无限膨胀，磁盘占用上限 15MB)
+_daemon_logger = logging.getLogger("MaterialHubCollector")
+_daemon_logger.setLevel(logging.INFO)
+if not _daemon_logger.handlers:
+    try:
+        _rfh = RotatingFileHandler(
+            str(DAEMON_LOG_FILE),
+            maxBytes=5 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8"
+        )
+        _rfh.setFormatter(logging.Formatter("[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+        _daemon_logger.addHandler(_rfh)
+    except Exception:
+        pass
 
 def log_daemon(msg: str):
     try:
-        with open(DAEMON_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    except:
+        _daemon_logger.info(msg)
+    except Exception:
         pass
 
-# 如果由 pythonw.exe 无窗口静默拉起，重定向输出至日志文件
+def update_heartbeat(status: str = "idle", queue_len: int = 0, history_len: int = 0, extra: str = ""):
+    """写入心跳文件，防止进程假死挂起并供外部体检与看门狗随时掌握活跃状态"""
+    try:
+        hb = {
+            "pid": os.getpid(),
+            "status": status,
+            "last_heartbeat": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": time.time(),
+            "queue_len": queue_len,
+            "history_len": history_len,
+            "extra": extra,
+            "version": "3.6.0"
+        }
+        tmp = HEARTBEAT_FILE.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(hb, f, ensure_ascii=False, indent=2)
+        tmp.replace(HEARTBEAT_FILE)
+    except Exception:
+        pass
+
+# 如果由 pythonw.exe 无窗口静默拉起，重定向输出至日志或空设备
 if sys.stdout is None:
     try:
         sys.stdout = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
-    except:
+    except Exception:
         sys.stdout = open(os.devnull, "w", encoding="utf-8")
 if sys.stderr is None:
     try:
         sys.stderr = open(DAEMON_LOG_FILE, "a", encoding="utf-8", buffering=1)
-    except:
+    except Exception:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 if hasattr(sys.stdout, "reconfigure") and sys.stdout:
     try:
         sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
-    except:
+    except Exception:
         pass
 
 # 基础存储路径自适应 (优先读取 config.json，若配置相对路径则基于 SKILL_ROOT；缺省时智能适配)
@@ -271,8 +310,11 @@ def get_material_library_stats(target_city: str):
 
 def send_feishu_material_sync(metadata: dict, queue_rem_count: int = 0):
     """
-    向飞书专属【素材采集通知群】同步详细入库卡片
-    用户明确要求：纯文本，不要图，包含标题、链接、入库情况、分类情况及素材库大盘当前状态
+    向飞书专属【素材采集通知群】同步高信噪比入库交互卡片
+    1. 标题超链接直达原笔记 (PC 端直开原画网页)
+    2. 原文短链以独立代码块包裹 (移动端一键秒拷)
+    3. 本地存储路径与四季归档路径以独立代码块包裹 (一键复制)
+    4. 紧凑型大盘与规格摘要 (消除冗长平铺刷屏)
     """
     if not ENABLE_FEISHU_SYNC or not FEISHU_NOTIFY_PY or not FEISHU_NOTIFY_PY.exists():
         return
@@ -293,43 +335,33 @@ def send_feishu_material_sync(metadata: dict, queue_rem_count: int = 0):
         tot_prec = stats["total_precision"]
         tot_aut = stats["total_autumn"]
         
-        queue_str = "队列已清空 (0 篇排队)" if queue_rem_count == 0 else f"剩余 {queue_rem_count} 篇排队下载中"
+        queue_str = "已清空 (0 篇排队)" if queue_rem_count == 0 else f"剩余 {queue_rem_count} 篇排队中"
+
+        season_work_dir = metadata.get("season_hardlink_dir", "")
+        season_block = ""
+        if season_work_dir:
+            season_block = f"**🌿 四季归档路径 (点击一键复制)**：\n```text\n{season_work_dir}\n```\n\n"
 
         if is_unclassified:
             text = (
-                f"📌 标题：《{title}》\n"
-                f"🔗 链接：{url}\n\n"
-                f"📂 入库情况：\n"
-                f"· 平台来源：{platform}图文\n"
-                f"· 资源规格：{img_cnt} 张高清原图 + 完整文案 ({content_len}字)\n"
-                f"· 存储目录：{target_dir}\n\n"
-                f"🏷️ 分类情况：\n"
-                f"· 城市分类：⚠️ 未识别到江浙沪地名（已安全暂存至 C盘下载目录）\n"
-                f"· 待办提示：请人工移入对应城市素材库\n\n"
-                f"📊 素材库当前状态：\n"
-                f"· 精准流量库总计：{tot_prec} 套\n"
-                f"· 秋季智能库总计：{tot_aut} 套\n"
-                f"· 队列状态：{queue_str}"
+                f"**📌 标题**：[{title}]({url})\n\n"
+                f"**🔗 原文短链 (点击一键复制)**：\n```text\n{url}\n```\n\n"
+                f"**📂 本地暂存目录 (点击一键复制)**：\n```text\n{target_dir}\n```\n\n"
+                f"**🏷️ 规格**：{platform}图文 ｜ {img_cnt} 张高清大图 ｜ {content_len} 字文案\n"
+                f"**⚠️ 分类提示**：未识别到江浙沪地名（暂存 C 盘下载目录，请手动归入对应城市）\n"
+                f"**📊 库容大盘**：精准库 {tot_prec} 套 ｜ 四季库 {tot_aut} 套 ｜ 队列: {queue_str}"
             )
-            title_header = f"⚠️ 待分类暂存：{title[:24]}"
+            title_header = f"⚠️ 待分类暂存：{title[:22]}"
         else:
             text = (
-                f"📌 标题：《{title}》\n"
-                f"🔗 链接：{url}\n\n"
-                f"📂 入库情况：\n"
-                f"· 平台来源：{platform}图文\n"
-                f"· 资源规格：{img_cnt} 张高清原图 + 完整文案 ({content_len}字)\n"
-                f"· 存储目录：{target_dir}\n\n"
-                f"🏷️ 分类情况：\n"
-                f"· 城市分类：【{city}】（命中地名规则精准归库）\n"
-                f"· 季节归档：【{season}】（NTFS 零占盘硬链接已就绪）\n\n"
-                f"📊 素材库当前状态：\n"
-                f"· 【{city}】类目现存：{city_cnt} 套素材\n"
-                f"· 精准流量库总计：{tot_prec} 套素材\n"
-                f"· 秋季智能库总计：{tot_aut} 套素材\n"
-                f"· 队列状态：{queue_str}"
+                f"**📌 标题**：[{title}]({url})\n\n"
+                f"**🔗 原文短链 (点击一键复制)**：\n```text\n{url}\n```\n\n"
+                f"**📂 本地存储目录 (点击一键复制)**：\n```text\n{target_dir}\n```\n\n"
+                f"{season_block}"
+                f"**🏷️ 规格**：{platform}图文 ｜ {img_cnt} 张高清大图 ｜ {content_len} 字文案\n"
+                f"**📊 大盘**：【{city}】现存 {city_cnt} 套 ｜ 精准库 {tot_prec} 套 ｜ 四季库 {tot_aut} 套 ｜ 队列: {queue_str}"
             )
-            title_header = f"已采集：{title[:26]}"
+            title_header = f"已采入【{city}】· {title[:20]}"
 
         # 用户严格指定：不要图，纯文本通知
         cmd = [
@@ -351,10 +383,10 @@ def send_feishu_error_sync(title_hint: str, url: str, reason: str):
         return
     try:
         text = (
-            f"❌ 错误复制 / 采集异常提示：\n"
-            f"内容：《{title_hint[:35]}》\n"
-            f"原因：{reason}\n"
-            f"🔗 链接：{url}"
+            f"**❌ 采集异常提示**：\n\n"
+            f"**📌 标题**：《{title_hint[:35]}》\n\n"
+            f"**⚠️ 异常原因**：{reason}\n\n"
+            f"**🔗 目标链接 (点击一键复制)**：\n```text\n{url}\n```"
         )
         cmd = [
             sys.executable, str(FEISHU_NOTIFY_PY),
@@ -752,6 +784,50 @@ MEDIA_LINK_REGEX = re.compile(
     r'https?://(?:xhslink\.com|xhslink\.cn|www\.xiaohongshu\.com|v\.douyin\.com|www\.douyin\.com|iesdouyin\.com)/[A-Za-z0-9_/.\-]+(?:\?[^\s\u4e00-\u9fa5]+)?'
 )
 
+def normalize_clean_url(raw_text: str) -> str:
+    """
+    智能优选与清洗媒体链接 (解决超长链接和追踪参数问题)：
+    1. 优先提取精炼短链 (xhslink.cn/o/..., xhslink.com/a/..., v.douyin.com/...)
+    2. 彻底剥离问号后面长达数百字符的追踪和死参 (?xsec_token=..., ?appuid=...)
+    3. 长链只保留纯净的核心路由 (如 xiaohongshu.com/explore/xxxxxx)
+    """
+    if not raw_text:
+        return ""
+
+    # 1. 优先探测小红书与抖音短链 (短链绝对优先，并剥离问号参数)
+    short_xhs = re.search(r'https?://(?:xhslink\.cn|xhslink\.com)/[A-Za-z0-9_/]+', raw_text)
+    if short_xhs:
+        return short_xhs.group(0).split('?')[0].strip()
+
+    short_dy = re.search(r'https?://v\.douyin\.com/[A-Za-z0-9]+/?', raw_text)
+    if short_dy:
+        return short_dy.group(0).split('?')[0].strip()
+
+    # 2. 次选小红书长链 (剥离长达几百字符的追踪死参，仅保留标准路径)
+    long_xhs_explore = re.search(r'https?://(?:www\.)?xiaohongshu\.com/explore/[a-fA-F0-9]+', raw_text)
+    if long_xhs_explore:
+        return long_xhs_explore.group(0).strip()
+
+    long_xhs_item = re.search(r'https?://(?:www\.)?xiaohongshu\.com/discovery/item/[a-fA-F0-9]+', raw_text)
+    if long_xhs_item:
+        return long_xhs_item.group(0).strip()
+
+    long_xhs_user = re.search(r'https?://(?:www\.)?xiaohongshu\.com/user/profile/[a-fA-F0-9]+', raw_text)
+    if long_xhs_user:
+        return long_xhs_user.group(0).strip()
+
+    # 3. 次选抖音长链 (剥离追踪参数)
+    long_dy = re.search(r'https?://(?:www\.)?douyin\.com/(?:note|video)/\d+', raw_text)
+    if long_dy:
+        return long_dy.group(0).strip()
+
+    # 4. 通用正则匹配兜底 (剔除尾部问号参数)
+    m = re.search(r'https?://(?:xhslink\.com|xhslink\.cn|www\.xiaohongshu\.com|v\.douyin\.com|www\.douyin\.com|iesdouyin\.com)/[A-Za-z0-9_/.\-]+', raw_text)
+    if m:
+        return m.group(0).split('?')[0].strip()
+
+    return ""
+
 # 核心下载执行函数
 def execute_download_and_file(target_url: str) -> tuple[bool, str, dict]:
     """
@@ -856,7 +932,7 @@ def execute_download_and_file(target_url: str) -> tuple[bool, str, dict]:
         "season": season_name,
         "is_unclassified": is_unclassified,
         "source": "剪贴板监听",
-        "engine": "万能下载器 v2.8.2",
+        "engine": "万能下载器 v3.6.0",
         "platform": platform,
         "tags": ["剪切板下载", "万能下载器下载", f"{platform}图文", target_city, "秋季素材" if is_autumn else "四季通用"],
         "downloaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -868,7 +944,7 @@ def execute_download_and_file(target_url: str) -> tuple[bool, str, dict]:
         "folder_name": folder_name,
         "target_dir": str(final_target_dir),
         "season_hardlink_dir": str(season_work_dir) if season_work_dir else "",
-        "version": "3.5.0",
+        "version": "3.6.0",
         "status": "success",
         "captured_by": "universal-clipboard-collector"
     }
@@ -881,20 +957,38 @@ def execute_download_and_file(target_url: str) -> tuple[bool, str, dict]:
             print(f"[Metadata Error]: {e}")
 
     # 四季分类与 NTFS 原生硬链接分发 (已识别地名才分发，未分类保留在C盘供人工整理)
+    # 四季分类与 NTFS 原生硬链接分发 (已识别地名才分发，跨卷自动降级保障 100% 留存)
     if not is_unclassified and season_work_dir:
         try:
             season_work_dir.mkdir(parents=True, exist_ok=True)
+            link_mode = "NTFS硬链接"
             for src_file in final_target_dir.iterdir():
                 if src_file.is_file():
                     dest_file = season_work_dir / src_file.name
                     if not dest_file.exists():
-                        try:
-                            os.link(src_file, dest_file)
-                        except:
-                            pass
-            log_daemon(f"🔗 四季硬链接建立成功: {season_work_dir}")
+                        linked = False
+                        # 1. 优先尝试 NTFS 原生硬链接 (要求同卷同盘符，0 存储占用)
+                        src_drive = getattr(src_file, 'drive', '')
+                        dest_drive = getattr(dest_file, 'drive', '')
+                        if src_drive and dest_drive and src_drive.upper() == dest_drive.upper():
+                            try:
+                                os.link(src_file, dest_file)
+                                linked = True
+                            except Exception:
+                                linked = False
+                        # 2. 跨驱动器容灾降级：尝试软链接或智能复制 (绝不静默丢失)
+                        if not linked:
+                            link_mode = "跨卷副本/软链"
+                            try:
+                                os.symlink(src_file, dest_file)
+                            except Exception:
+                                try:
+                                    shutil.copy2(src_file, dest_file)
+                                except Exception:
+                                    pass
+            log_daemon(f"🔗 四季归档建立成功 ({link_mode}): {season_work_dir}")
         except Exception as ex_link:
-            log_daemon(f"❌ 建立硬链接异常: {ex_link}")
+            log_daemon(f"❌ 建立四季归档异常: {ex_link}")
             if sys.stdout:
                 print(f"[Hardlink Error]: {ex_link}")
 
@@ -1014,6 +1108,60 @@ def queue_worker_loop(queue_mgr: QueueManager, history_set: set):
             time.sleep(2.0)
 
 
+def start_system_tray(queue_mgr: QueueManager, history_set: set):
+    """启动轻量系统托盘图标，提供右键快捷菜单与运行感知，无 pystray 时优雅跳过"""
+    try:
+        import pystray
+        from PIL import Image, ImageDraw
+
+        def create_tray_image():
+            img = Image.new('RGBA', (64, 64), color=(0, 0, 0, 0))
+            d = ImageDraw.Draw(img)
+            # 现代科技靛蓝底板
+            d.rounded_rectangle((4, 4, 60, 60), radius=14, fill=(14, 116, 144))
+            # 绘制白色的 M 标识
+            d.polygon([(18, 46), (18, 18), (26, 18), (32, 32), (38, 18), (46, 18), (46, 46), (39, 46), (39, 28), (34, 40), (30, 40), (25, 28), (25, 46)], fill=(255, 255, 255))
+            return img
+
+        def on_open_root(icon, item):
+            try:
+                os.startfile(str(BASE_MATERIAL_DIR))
+            except Exception:
+                pass
+
+        def on_open_log(icon, item):
+            try:
+                os.startfile(str(DAEMON_LOG_FILE))
+            except Exception:
+                pass
+
+        def on_check_status(icon, item):
+            rem = queue_mgr.get_remaining_count()
+            is_cooling, rem_sec, reason = queue_mgr.is_cooling_down()
+            cool_str = f"，风控冷却中剩余 {int(rem_sec)}s" if is_cooling else ""
+            msg = f"📊 MaterialHub 运行正常\n· 待下载队列：{rem} 篇{cool_str}\n· 历史已采集：{len(history_set)} 套\n· 日志路径：{DAEMON_LOG_FILE.name}"
+            send_desktop_notification(msg, title="素材采集中枢状态", status="info")
+
+        def on_exit(icon, item):
+            icon.stop()
+            os._exit(0)
+
+        menu = pystray.Menu(
+            pystray.MenuItem("📊 查看运行状态", on_check_status),
+            pystray.MenuItem("📁 打开素材根目录", on_open_root),
+            pystray.MenuItem("📋 打开运行日志", on_open_log),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("🚪 退出采集中枢", on_exit)
+        )
+
+        icon = pystray.Icon("MaterialHub", create_tray_image(), "MaterialHub 万能素材采集中枢", menu)
+        tray_t = threading.Thread(target=icon.run, daemon=True)
+        tray_t.start()
+        log_daemon("🎨 系统托盘图标启动成功，已常驻任务栏右下角。")
+    except Exception as ex:
+        log_daemon(f"ℹ️ 托盘组件未启用或初始化跳过: {ex}")
+
+
 # 主剪贴板监听程序 (Producer Thread)
 def main():
     # Win32 全局互斥锁，确保同一时刻仅有唯一后台守护进程
@@ -1048,6 +1196,24 @@ def main():
     worker_t = threading.Thread(target=queue_worker_loop, args=(queue_mgr, history_set), daemon=True)
     worker_t.start()
 
+    # 启动后台心跳监控线程 (每10秒更新 collector_heartbeat.json)
+    def heartbeat_loop():
+        while True:
+            try:
+                is_cooling, _, _ = queue_mgr.is_cooling_down()
+                rem = queue_mgr.get_remaining_count()
+                status = "cooling" if is_cooling else ("downloading" if rem > 0 else "idle")
+                update_heartbeat(status=status, queue_len=rem, history_len=len(history_set))
+            except Exception:
+                pass
+            time.sleep(10.0)
+
+    hb_t = threading.Thread(target=heartbeat_loop, daemon=True)
+    hb_t.start()
+
+    # 启动轻量系统托盘 (右键可直接打开目录与查看大盘)
+    start_system_tray(queue_mgr, history_set)
+
     last_clipboard = ""
 
     while True:
@@ -1056,10 +1222,10 @@ def main():
             if current_text and current_text != last_clipboard:
                 last_clipboard = current_text
                 
-                # 检查是否包含小红书或抖音图文链接
-                m = MEDIA_LINK_REGEX.search(current_text)
-                if m:
-                    target_url = m.group(0).strip()
+                # 检查是否包含小红书或抖音图文链接 (优先提取精炼短链，剥离追踪参数)
+                clean_url = normalize_clean_url(current_text)
+                if clean_url:
+                    target_url = clean_url
                     title_hint = extract_title_hint(current_text)
                     
                     if target_url in history_set:
@@ -1099,16 +1265,15 @@ def main():
                             if sys.stdout:
                                 print(f"[Enqueued] Added to queue: {target_url} (Pos: {pos})")
                             
-                            # 如果当前工作线程正忙或处于冷却中，且当前排在第 2 篇及以后，弹窗提示用户已安全入队
+                            # 立即双段反馈：复制瞬间 0.1s 给予确定感反馈，彻底消除黑盒等待焦虑 (无声响)
+                            short_hint = title_hint[:22] + ("..." if len(title_hint) > 22 else "")
                             is_cooling, rem_sec, _ = queue_mgr.is_cooling_down()
-                            if pos > 1 or is_cooling:
-                                short_hint = title_hint[:24] + ("..." if len(title_hint) > 24 else "")
-                                cool_tip = f" (风控冷却剩余 {int(rem_sec)}s)" if is_cooling and rem_sec > 1 else ""
-                                notify_msg = (
-                                    f"📥 已加入待下载队列：《{short_hint}》\n"
-                                    f"⏳ 当前排队: 第 {pos} 篇 (风控保护中{cool_tip}，稍后自动下载入库)"
-                                )
-                                send_desktop_notification(notify_msg, title="待下载队列暂存", status="info")
+                            cool_tip = f" (风控冷却剩余 {int(rem_sec)}s)" if is_cooling and rem_sec > 1 else ""
+                            notify_msg = (
+                                f"📥 已捕获灵感，排队加工中：《{short_hint}》\n"
+                                f"⏳ 当前排队: 第 {pos} 篇 (防风控拟人处理中{cool_tip}，完成后自动入库并同步飞书)"
+                            )
+                            send_desktop_notification(notify_msg, title="采集中枢已捕获", status="info")
                         else:
                             if sys.stdout:
                                 print(f"[Skip] Already waiting in pending queue: {target_url}")

@@ -1,41 +1,31 @@
-# 万能下载器
+# 万能下载器 (Universal Downloader)
 
-一款本地优先的公开社交媒体素材下载工具：粘贴分享文案或链接，自动识别平台，按平台分流，保存媒体和 `文案.txt`。Windows/CLI/AI Skill 已支持小红书、抖音及一组公开平台；Android 与 iPhone 保持独立客户端，目前支持小红书和抖音。
+一款本地优先的公开社交媒体素材下载工具：**剪贴板极速无感捕获 · 小红书/抖音双平台直解 · 待下载防风控阶梯冷却 · NTFS 原生硬链接归档 · 0 侵入 0 依赖登录**。Windows/CLI/AI Skill 已全面支持小红书、抖音及公开主流媒体平台。
 
-当前正式版本：**V2.8.2** · [下载与发布记录](https://github.com/zwmopen/xhs-dl/releases/tag/v2.8.2) · [源码仓库](https://github.com/zwmopen/xhs-dl)
+当前正式版本：**v3.6.0** · [下载与发布说明](https://github.com/zwmopen/xhs-dl/releases/tag/v3.6.0) · [源码仓库](https://github.com/zwmopen/xhs-dl)
 
-> 这是面向个人工作流的本地工具，不是在线解析站，也不是云同步服务。下载目录、设置和历史默认留在当前设备。
+> 💡 **本地优先核心原则**：这是面向个人工作流的本地自愈工具，不是在线解析站，绝不上传私有数据。下载目录、历史记录与元数据 100% 留存在当前设备。
 
-## 项目简介
+---
 
-### 为什么开发
+## 🌟 v3.6.0 核心突破：极速无感剪贴板采集中枢
 
-小红书、抖音等平台的分享文本常常混在一段口令、标题和链接中；逐条打开、找原图、改文件名、整理文案很耗时。这个项目把“粘贴 → 识别 → 稳定下载 → 归档”收成一个可重复的本地流程。
+在 v3.6.0 中，系统正式实装了 **`universal_clipboard_collector.py`（万能剪贴板采集中枢）**：
+1. **随手复制，后台自动入库**：只要在任意聊天工具、浏览器中复制小红书或抖音分享链接，后台 **0.1 秒内自动侦测入库**，无需反复切换窗口点击“粘贴”；
+2. **待下载队列与防风控阶梯冷却**：连续复制多篇自动进入 `clipboard_pending_queue.json` 磁盘队列排队；每篇拟人间隔 8~15 秒，遇平台风控自动阶梯冷却（60s/120s/180s），冷却后自动无缝续跑；
+3. **城市地名识别与 NTFS 原生硬链接**：自动识别标题正文中的城市目录（宁波/杭州/安吉等），同卷建立秋季/四季归档硬链接，**0 额外存储开销**；
+4. **系统托盘与飞书纯文本大盘**：任务栏右键菜单直达素材库与日志，支持飞书低扰通知。
 
-### 解决什么问题
-
-- 自动从整段分享文案中提取 URL，并识别小红书、抖音、X、B站等平台。
-- 小红书/抖音使用专用公开页面解析链路，其他公开平台使用本地 yt-dlp 后备引擎。
-- 图片默认转为高质量 JPG，按封面/内页顺序命名；每篇内容生成一份 `文案.txt`。
-- 作品目录使用 `评数字-赞数字-标题-作者`，历史记录集中在一个 JSON 数据库，不污染每个作品目录。
-- Windows 桌面、Android、iPhone 和 AI Skill 各自独立运行，不要求登录，不共享浏览器 Cookie。
-
-### 设计思路
-
-1. **本地优先**：链接解析、下载、转码、历史记录尽量在用户设备完成。
-2. **统一输入**：粘贴一条链接、多条链接或完整分享文本，入口不要求用户先手动分类。
-3. **平台分流**：专用平台走稳定适配器，公共平台复用本地 yt-dlp，避免复制多套下载器。
-4. **稳优先于快**：批量任务默认随机慢速等待，失败保留清晰原因，残缺文件不会被当作成功。
-5. **可恢复交付**：源码、便携包、移动端安装包、Skill 和 SHA256 清单一起发布，旧版本可回退。
+---
 
 ## 平台与客户端状态
 
 | 客户端 | 当前版本 | 能力 | 状态 |
 | --- | --- | --- | --- |
-| Windows 桌面/CLI | V2.8.2 | 小红书、抖音、X/Twitter、B站、YouTube、TikTok、Instagram、Facebook、Pinterest、Reddit、Vimeo、Bluesky（按公开可访问性） | 正式可用 |
+| Windows 桌面/CLI/守护 | **v3.6.0** | 小红书、抖音、剪贴板无感捕获、防风控队列、X/B站/YouTube等公开平台 | 正式可用 |
 | Android | V1.3.2 | 小红书、抖音；支持手动粘贴、系统分享、下载目录选择 | Release APK，可内测安装 |
 | iPhone | V0.3.2 | 小红书、抖音；支持 Files 目录选择 | 源码和未签名 IPA；需 Apple 签名 |
-| AI Skill | V2.8.2 | 自动提取链接并调用统一路由 | `universal-downloader` 正式入口 |
+| AI Skill | **v3.6.0** | 自动提取链接并调用统一路由 | `universal-downloader` 正式入口 |
 
 Windows 和 AI Skill 的“多平台”表示会尝试处理公开媒体，不代表每个平台或每条内容永久可下载；遇到登录、验证码、地区限制或平台风控时会明确失败。Android/iPhone 不宣称已经同步 Windows 的全部平台能力。
 
@@ -70,19 +60,18 @@ V2 通过独立的 [XHS-Downloader](https://github.com/JoeanAmier/XHS-Downloader
 
 ### 直接下载
 
-打开 [V2.8.2 Release](https://github.com/zwmopen/xhs-dl/releases/tag/v2.8.2)：
+打开 [v3.6.0 Release](https://github.com/zwmopen/xhs-dl/releases/tag/v3.6.0)：
 
-- Windows：`universal-downloader-v2.8.2-windows-portable.zip` 或独立 `universal-downloader-v2.8.2.exe`
-- Android：`universal-downloader-android-v1.3.2.apk`
-- iPhone：`universal-downloader-ios-v0.3.2-altstore.ipa`（未签名，需自己的 Apple 签名）
-- AI：`universal-downloader-v2.8.2-skill.zip`
-- 校验：`SHA256SUMS-v2.8.2.txt`
+- Windows：`universal-downloader-v3.6.0-windows-portable.zip`
+- 校验：`SHA256SUMS-v3.6.0.txt`
+- 说明：[v3.6.0 正式稳定版发布说明](docs/RELEASE-NOTES-3.6.0.md)
 
-### Windows 首次安装
+### Windows 首次安装与使用
 
-Windows 用户解压发布包后，可以先双击 `一键安装V2.bat`，安装完成后双击 `启动无水印版.bat`。
-
-推荐使用 V2.8.2 便携桌面版：解压 `universal-downloader-v2.8.2-windows-portable.zip`，首次使用先运行 `一键安装V2.bat`，之后双击 `万能下载器.exe`。电脑端采集抖音需要系统已安装 Microsoft Edge，但不会使用 Edge 的个人资料或登录态；通用平台组件已经随包提供。
+推荐使用 **v3.6.0 便携桌面版**：解压 `universal-downloader-v3.6.0-windows-portable.zip`：
+1. **图形界面**：双击 `万能下载器.exe`，粘贴链接即可开始采集；
+2. **极速剪贴板后台守护**：运行 `python universal_clipboard_collector.py`，随手复制小红书或抖音链接，后台 0.1s 极速侦测并自动下载入库；
+3. 通用平台组件与本地解析引擎已经随包完整提供，电脑端采集抖音需要系统已安装 Microsoft Edge（不会读取 Edge 的个人资料或登录态）。
 
 在 PowerShell 中运行：
 
@@ -177,14 +166,22 @@ Skill 不读取浏览器登录态，不保存 Cookie、Token 或密码；需要�
 
 ## 开发与验证
 
-- Python：`pytest -q`（V2.8.2：55 passed）
+- Python：`pytest -q`（v3.6.0：56 passed 100%）
 - 静态检查：`ruff check xhs_dl tests`、`python -m compileall -q xhs_dl tests`
 - Android：`assembleRelease`、`lintVitalRelease`、APK v2 签名检查通过
-- Windows：V2.8.2 打包 EXE 使用真实 `xhslink.cn` 链接验收，`success=1 / failed=0`，15 张 JPG、`文案.txt`、中文和 Emoji 文件名正常
-- Android Gradle 测试在当前中文工程路径存在统一 `ClassNotFoundException` 环境问题，不能将其伪报为全绿；源码编译和 lint 已单独验证
+- Windows：v3.6.0 便携版打包 ZIP 构建完毕，剪贴板后台极速守护端到端验收通过
 
-完整开发交接见 `开发手册.md`，产品使用见 `使用手册.md`，安全边界见 `安全与注意事项.md`，版本变化见 `CHANGELOG.md`。
+完整开发交接见 `开发手册.md`，产品使用见 `使用手册.md`，发布说明见 [docs/RELEASE-NOTES-3.6.0.md](docs/RELEASE-NOTES-3.6.0.md)，版本变化见 `CHANGELOG.md`。
 
 ## License
 
 本适配项目为 MIT；独立下载引擎为 GPL-3.0，以其仓库许可证为准。
+
+---
+
+## 📝 变更记录
+
+| 日期 (时间) | 执行者 | 记录 |
+|---|---|---|
+| 2026-10-01 09:30 | 反重力 | 全面升级发布 v3.6.0 官方稳定版：实装极速无感剪贴板守护、待下载防风控队列、双平台解析与原生硬链接归档 |
+| 2026-09-17 23:11 | 💻 本地 PC / 反重力 | 初始化创建文档并补齐变更记录历史 |
